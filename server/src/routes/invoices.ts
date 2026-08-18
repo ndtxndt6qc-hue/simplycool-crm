@@ -16,13 +16,14 @@ export const invoicesRouter = Router();
 
 async function getInvoiceTotals(invoiceId: number) {
   const items = await db.select().from(invoiceItems).where(eq(invoiceItems.invoiceId, invoiceId));
-  const netto = items.reduce((acc, i) => acc + Number(i.einzelpreis) * i.menge, 0);
+  const netto = items.reduce((acc, i) => acc + Number(i.einzelpreis) * Number(i.menge), 0);
   const paymentRows = await db.select().from(payments).where(eq(payments.invoiceId, invoiceId));
   const bezahlt = paymentRows.reduce((acc, p) => acc + Number(p.betrag), 0);
   return { items, netto, payments: paymentRows, bezahlt };
 }
 
 function computeDisplayStatus(status: string, faelligkeitsdatum: string, bezahlt: number, total: number) {
+  if (status === "storniert") return "storniert";
   if (status === "bezahlt") return "bezahlt";
   if (bezahlt >= total && total > 0) return "bezahlt";
   const overdue = new Date(faelligkeitsdatum) < new Date();
@@ -149,6 +150,7 @@ invoicesRouter.post(
           invoiceId: invoice.id,
           beschreibung: i.beschreibung,
           menge: i.menge,
+          einheit: i.einheit,
           einzelpreis: i.einzelpreis,
           mwstSatz: settings.defaultMwstSatz,
         }))
@@ -200,6 +202,7 @@ invoicesRouter.patch(
 const invoiceItemSchema = z.object({
   beschreibung: z.string().min(1),
   menge: z.number().positive(),
+  einheit: z.string().optional(),
   einzelpreis: z.number(),
 });
 
@@ -217,7 +220,8 @@ invoicesRouter.post(
       .values({
         invoiceId: Number(req.params.id),
         beschreibung: parsed.data.beschreibung,
-        menge: parsed.data.menge,
+        menge: parsed.data.menge.toString(),
+        einheit: parsed.data.einheit,
         einzelpreis: parsed.data.einzelpreis.toString(),
         mwstSatz: settings.defaultMwstSatz,
       })
@@ -234,10 +238,14 @@ invoicesRouter.patch(
       res.status(400).json({ error: parsed.error.flatten() });
       return;
     }
-    const { einzelpreis, ...rest } = parsed.data;
+    const { einzelpreis, menge, ...rest } = parsed.data;
     const [item] = await db
       .update(invoiceItems)
-      .set({ ...rest, ...(einzelpreis !== undefined ? { einzelpreis: einzelpreis.toString() } : {}) })
+      .set({
+        ...rest,
+        ...(einzelpreis !== undefined ? { einzelpreis: einzelpreis.toString() } : {}),
+        ...(menge !== undefined ? { menge: menge.toString() } : {}),
+      })
       .where(eq(invoiceItems.id, Number(req.params.itemId)))
       .returning();
     if (!item) {
@@ -337,9 +345,17 @@ invoicesRouter.post(
       res.status(404).json({ error: "Rechnung nicht gefunden." });
       return;
     }
+    if (detail.status === "storniert") {
+      res.status(400).json({ error: "Diese Rechnung wurde storniert." });
+      return;
+    }
     const offenerBetrag = detail.total - detail.bezahlt;
     if (offenerBetrag <= 0) {
       res.status(400).json({ error: "Diese Rechnung ist bereits vollständig bezahlt." });
+      return;
+    }
+    if (new Date(detail.faelligkeitsdatum) > new Date()) {
+      res.status(400).json({ error: "Mahnungen können erst nach Ablauf der Zahlungsfrist erstellt werden." });
       return;
     }
     const settings = await getOrCreateSettings();

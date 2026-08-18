@@ -17,6 +17,9 @@ export type Settings = {
   smtpPort: number | null;
   smtpUser: string | null;
   smtpPassSet: boolean;
+  garantieZeit: string | null;
+  abnahmeprotokollVorlagePfad: string | null;
+  installationsanweisungVorlagePfad: string | null;
 };
 
 export type SettingsInput = Partial<{
@@ -33,6 +36,7 @@ export type SettingsInput = Partial<{
   smtpPort: number;
   smtpUser: string;
   smtpPassEncrypted: string;
+  garantieZeit: string;
 }>;
 
 export function useSettings() {
@@ -59,6 +63,20 @@ export function useUploadLogo() {
       const res = await fetch("/api/settings/logo", { method: "POST", credentials: "include", body: formData });
       if (!res.ok) throw new Error("Upload fehlgeschlagen.");
       return res.json() as Promise<{ logoPfad: string }>;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["settings"] }),
+  });
+}
+
+export function useUploadVorlage(typ: "abnahmeprotokoll" | "installationsanweisung") {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append("datei", file);
+      const res = await fetch(`/api/settings/vorlagen/${typ}`, { method: "POST", credentials: "include", body: formData });
+      if (!res.ok) throw new Error("Upload fehlgeschlagen.");
+      return res.json();
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["settings"] }),
   });

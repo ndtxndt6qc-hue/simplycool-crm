@@ -8,6 +8,7 @@ const STATUS_BADGE: Record<string, string> = {
   teilzahlung: "badge-warning",
   bezahlt: "badge-success",
   ueberfaellig: "badge-danger",
+  storniert: "badge-neutral",
 };
 
 export function InvoicesPage() {

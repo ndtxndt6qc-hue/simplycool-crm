@@ -18,7 +18,10 @@ export function CreateQuoteFromLeadModal({ lead, onClose }: { lead: Lead; onClos
   const createQuote = useCreateQuote();
 
   const nameGuess = splitLeadName(lead.name);
-  const addressGuess = parseLeadAddress(lead.adresse);
+  const addressGuess =
+    lead.plz || lead.ort
+      ? { strasse: lead.adresse ?? "", plz: lead.plz ?? "", ort: lead.ort ?? "" }
+      : parseLeadAddress(lead.adresse);
 
   const [typ, setTyp] = useState<KundenTyp>("privat");
   const [vorname, setVorname] = useState(nameGuess.vorname);

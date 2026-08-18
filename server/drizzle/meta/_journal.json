@@ -22,6 +22,13 @@
       "when": 1786950917417,
       "tag": "0002_square_havok",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787064039752,
+      "tag": "0003_hard_rawhide_kid",
+      "breakpoints": true
     }
   ]
 }

@@ -12,6 +12,7 @@ export type Device = {
   einkaufspreis: string;
   empfVerkaufspreis: string;
   lieferantId: number | null;
+  bildPfad: string | null;
   lagerbestand: number;
   mindestbestand: number;
   notiz: string | null;
@@ -65,6 +66,20 @@ export function useUpdateDevice() {
   return useMutation({
     mutationFn: ({ id, ...input }: { id: number } & Partial<DeviceInput>) =>
       api.patch<Device>(`/devices/${id}`, input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["devices"] }),
+  });
+}
+
+export function useUploadDeviceImage(deviceId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append("bild", file);
+      const res = await fetch(`/api/devices/${deviceId}/bild`, { method: "POST", credentials: "include", body: formData });
+      if (!res.ok) throw new Error("Upload fehlgeschlagen.");
+      return res.json() as Promise<Device>;
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["devices"] }),
   });
 }

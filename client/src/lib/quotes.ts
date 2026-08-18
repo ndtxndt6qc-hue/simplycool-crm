@@ -10,7 +10,8 @@ export type QuoteItem = {
   typ: QuoteItemTyp;
   deviceId: number | null;
   beschreibung: string;
-  menge: number;
+  menge: string;
+  einheit: string | null;
   einzelpreis: string;
   einkaufspreisIntern: string;
   sortOrder: number;
@@ -38,6 +39,7 @@ export type QuoteItemInput = {
   deviceId?: number;
   beschreibung: string;
   menge: number;
+  einheit?: string;
   einzelpreis: number;
   einkaufspreisIntern: number;
 };
@@ -94,10 +96,28 @@ export function useAddQuoteItem(quoteId: number) {
   });
 }
 
+export function useUpdateQuoteItem(quoteId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...input }: { id: number } & Partial<QuoteItemInput>) =>
+      api.patch<QuoteItem>(`/quotes/${quoteId}/items/${id}`, input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["quotes", quoteId] }),
+  });
+}
+
 export function useDeleteQuoteItem(quoteId: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (itemId: number) => api.delete<void>(`/quotes/${quoteId}/items/${itemId}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["quotes", quoteId] }),
+  });
+}
+
+export function useMoveQuoteItem(quoteId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ itemId, direction }: { itemId: number; direction: "up" | "down" }) =>
+      api.post<void>(`/quotes/${quoteId}/items/${itemId}/move`, { direction }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["quotes", quoteId] }),
   });
 }

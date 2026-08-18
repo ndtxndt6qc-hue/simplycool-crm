@@ -1,11 +1,16 @@
 import { Router } from "express";
 import { z } from "zod";
 import { eq, sql } from "drizzle-orm";
+import multer from "multer";
+import path from "node:path";
+import fs from "node:fs";
+import crypto from "node:crypto";
 import { db } from "../db/client.js";
 import {
   customers,
   devices,
   orderChecklistItems,
+  orderDocuments,
   orderItems,
   orders,
   properties,
@@ -14,9 +19,29 @@ import {
   stockMovements,
 } from "../db/schema.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { CHECKLIST_PUNKTE, ORDER_STATUS } from "@klimainstall/shared";
+import { CHECKLIST_PUNKTE, ORDER_DOCUMENT_TYPEN, ORDER_STATUS } from "@klimainstall/shared";
 
 export const ordersRouter = Router();
+
+const ORDER_DOCUMENT_DIR = path.resolve(process.cwd(), "uploads", "order-documents");
+fs.mkdirSync(ORDER_DOCUMENT_DIR, { recursive: true });
+
+const orderDocumentUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, ORDER_DOCUMENT_DIR),
+    filename: (_req, file, cb) => cb(null, `${crypto.randomUUID()}${path.extname(file.originalname).toLowerCase()}`),
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (
+      !["application/pdf", "image/png", "image/jpeg", "image/webp"].includes(file.mimetype)
+    ) {
+      cb(new Error("Nur PDF, PNG oder JPEG erlaubt."));
+      return;
+    }
+    cb(null, true);
+  },
+});
 
 ordersRouter.get(
   "/",
@@ -76,8 +101,42 @@ ordersRouter.get(
       .select()
       .from(orderChecklistItems)
       .where(eq(orderChecklistItems.orderId, orderId));
+    const documents = await db
+      .select()
+      .from(orderDocuments)
+      .where(eq(orderDocuments.orderId, orderId));
 
-    res.json({ ...row.order, customer: row.customer, property: row.property, items, checklist });
+    res.json({ ...row.order, customer: row.customer, property: row.property, items, checklist, documents });
+  })
+);
+
+ordersRouter.post(
+  "/:id/documents",
+  orderDocumentUpload.single("datei"),
+  asyncHandler(async (req, res) => {
+    if (!req.file) {
+      res.status(400).json({ error: "Keine Datei erhalten." });
+      return;
+    }
+    const orderId = Number(req.params.id);
+    const typRaw = typeof req.body?.typ === "string" ? req.body.typ : "abnahmeprotokoll_signiert";
+    const typ = ORDER_DOCUMENT_TYPEN.includes(typRaw as (typeof ORDER_DOCUMENT_TYPEN)[number])
+      ? (typRaw as (typeof ORDER_DOCUMENT_TYPEN)[number])
+      : "abnahmeprotokoll_signiert";
+    const dateipfad = `/uploads/order-documents/${req.file.filename}`;
+    const [document] = await db
+      .insert(orderDocuments)
+      .values({ orderId, typ, dateipfad })
+      .returning();
+    res.status(201).json(document);
+  })
+);
+
+ordersRouter.delete(
+  "/:id/documents/:docId",
+  asyncHandler(async (req, res) => {
+    await db.delete(orderDocuments).where(eq(orderDocuments.id, Number(req.params.docId)));
+    res.status(204).send();
   })
 );
 
@@ -127,6 +186,7 @@ ordersRouter.post(
           deviceId: i.deviceId,
           beschreibung: i.beschreibung,
           menge: i.menge,
+          einheit: i.einheit,
           einzelpreis: i.einzelpreis,
           status: "reserviert" as const,
         }))
@@ -205,15 +265,16 @@ ordersRouter.patch(
           if (!item.deviceId || item.status !== "reserviert") continue;
           const [device] = await db.select().from(devices).where(eq(devices.id, item.deviceId));
           if (!device) continue;
+          const menge = Math.round(Number(item.menge));
           await db.insert(stockMovements).values({
             deviceId: item.deviceId,
             typ: "verbrauch_installation",
-            menge: -item.menge,
+            menge: -menge,
             orderId,
           });
           await db
             .update(devices)
-            .set({ lagerbestand: device.lagerbestand - item.menge })
+            .set({ lagerbestand: device.lagerbestand - menge })
             .where(eq(devices.id, item.deviceId));
           await db.update(orderItems).set({ status: "verbaut" }).where(eq(orderItems.id, item.id));
         }
@@ -223,16 +284,17 @@ ordersRouter.patch(
           if (!item.deviceId || item.status !== "verbaut") continue;
           const [device] = await db.select().from(devices).where(eq(devices.id, item.deviceId));
           if (!device) continue;
+          const menge = Math.round(Number(item.menge));
           await db.insert(stockMovements).values({
             deviceId: item.deviceId,
             typ: "korrektur",
-            menge: item.menge,
+            menge,
             orderId,
             notiz: "Rückbuchung: Installation als nicht durchgeführt markiert",
           });
           await db
             .update(devices)
-            .set({ lagerbestand: device.lagerbestand + item.menge })
+            .set({ lagerbestand: device.lagerbestand + menge })
             .where(eq(devices.id, item.deviceId));
           await db.update(orderItems).set({ status: "reserviert" }).where(eq(orderItems.id, item.id));
         }

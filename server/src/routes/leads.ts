@@ -11,6 +11,8 @@ export const leadsRouter = Router();
 const leadCreateSchema = z.object({
   name: z.string().min(1),
   adresse: z.string().optional(),
+  plz: z.string().optional(),
+  ort: z.string().optional(),
   telefon: z.string().optional(),
   email: z.string().email().optional().or(z.literal("")),
   notiz: z.string().optional(),
@@ -20,6 +22,8 @@ const leadCreateSchema = z.object({
 const leadUpdateSchema = z.object({
   name: z.string().min(1).optional(),
   adresse: z.string().optional(),
+  plz: z.string().optional(),
+  ort: z.string().optional(),
   telefon: z.string().optional(),
   email: z.string().email().optional().or(z.literal("")),
   notiz: z.string().optional(),

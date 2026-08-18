@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { z } from "zod";
-import { eq, sql } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { customers, leads, properties, quoteItems, quotes } from "../db/schema.js";
+import { customers, devices, leads, properties, quoteItems, quotes } from "../db/schema.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { QUOTE_ITEM_TYPEN, QUOTE_STATUS } from "@klimainstall/shared";
 import { getOrCreateSettings } from "../services/settings.js";
@@ -29,12 +29,17 @@ const quoteItemSchema = z.object({
   deviceId: z.number().int().optional(),
   beschreibung: z.string().min(1),
   menge: z.number().positive(),
+  einheit: z.string().optional(),
   einzelpreis: z.number(),
   einkaufspreisIntern: z.number().default(0),
 });
 
 async function getQuoteTotals(quoteId: number) {
-  const items = await db.select().from(quoteItems).where(eq(quoteItems.quoteId, quoteId));
+  const items = await db
+    .select()
+    .from(quoteItems)
+    .where(eq(quoteItems.quoteId, quoteId))
+    .orderBy(quoteItems.sortOrder);
   const summe = items.reduce((acc, i) => acc + Number(i.einzelpreis) * Number(i.menge), 0);
   const deckungsbeitrag = items.reduce(
     (acc, i) => acc + (Number(i.einzelpreis) - Number(i.einkaufspreisIntern)) * Number(i.menge),
@@ -143,6 +148,13 @@ quotesRouter.patch(
       res.status(404).json({ error: "Angebot nicht gefunden." });
       return;
     }
+
+    if (parsed.data.status === "angenommen" && quote.leadId) {
+      await db.update(leads).set({ status: "gewonnen", updatedAt: new Date() }).where(eq(leads.id, quote.leadId));
+    } else if (parsed.data.status === "abgelehnt" && quote.leadId) {
+      await db.update(leads).set({ status: "verloren", updatedAt: new Date() }).where(eq(leads.id, quote.leadId));
+    }
+
     res.json(quote);
   })
 );
@@ -164,6 +176,10 @@ quotesRouter.post(
       res.status(400).json({ error: parsed.error.flatten() });
       return;
     }
+    const [maxRow] = await db
+      .select({ maxSort: sql<number>`coalesce(max(${quoteItems.sortOrder}), -1)` })
+      .from(quoteItems)
+      .where(eq(quoteItems.quoteId, Number(req.params.id)));
     const [item] = await db
       .insert(quoteItems)
       .values({
@@ -171,9 +187,11 @@ quotesRouter.post(
         typ: parsed.data.typ,
         deviceId: parsed.data.deviceId,
         beschreibung: parsed.data.beschreibung,
-        menge: parsed.data.menge,
+        menge: parsed.data.menge.toString(),
+        einheit: parsed.data.einheit,
         einzelpreis: parsed.data.einzelpreis.toString(),
         einkaufspreisIntern: parsed.data.einkaufspreisIntern.toString(),
+        sortOrder: Number(maxRow.maxSort) + 1,
       })
       .returning();
     res.status(201).json(item);
@@ -188,13 +206,14 @@ quotesRouter.patch(
       res.status(400).json({ error: parsed.error.flatten() });
       return;
     }
-    const { einzelpreis, einkaufspreisIntern, ...rest } = parsed.data;
+    const { einzelpreis, einkaufspreisIntern, menge, ...rest } = parsed.data;
     const [item] = await db
       .update(quoteItems)
       .set({
         ...rest,
         ...(einzelpreis !== undefined ? { einzelpreis: einzelpreis.toString() } : {}),
         ...(einkaufspreisIntern !== undefined ? { einkaufspreisIntern: einkaufspreisIntern.toString() } : {}),
+        ...(menge !== undefined ? { menge: menge.toString() } : {}),
       })
       .where(eq(quoteItems.id, Number(req.params.itemId)))
       .returning();
@@ -203,6 +222,39 @@ quotesRouter.patch(
       return;
     }
     res.json(item);
+  })
+);
+
+quotesRouter.post(
+  "/:id/items/:itemId/move",
+  asyncHandler(async (req, res) => {
+    const direction = req.body?.direction;
+    if (direction !== "up" && direction !== "down") {
+      res.status(400).json({ error: "direction muss 'up' oder 'down' sein." });
+      return;
+    }
+    const quoteId = Number(req.params.id);
+    const itemId = Number(req.params.itemId);
+    const items = await db
+      .select()
+      .from(quoteItems)
+      .where(eq(quoteItems.quoteId, quoteId))
+      .orderBy(quoteItems.sortOrder);
+    const index = items.findIndex((i) => i.id === itemId);
+    if (index === -1) {
+      res.status(404).json({ error: "Position nicht gefunden." });
+      return;
+    }
+    const swapIndex = direction === "up" ? index - 1 : index + 1;
+    if (swapIndex < 0 || swapIndex >= items.length) {
+      res.status(400).json({ error: "Position kann nicht weiter verschoben werden." });
+      return;
+    }
+    const a = items[index];
+    const b = items[swapIndex];
+    await db.update(quoteItems).set({ sortOrder: b.sortOrder }).where(eq(quoteItems.id, a.id));
+    await db.update(quoteItems).set({ sortOrder: a.sortOrder }).where(eq(quoteItems.id, b.id));
+    res.status(204).send();
   })
 );
 
@@ -222,7 +274,17 @@ async function loadQuoteForDocument(quoteId: number) {
     .innerJoin(properties, eq(quotes.propertyId, properties.id))
     .where(eq(quotes.id, quoteId));
   if (!row) return null;
-  const items = await db.select().from(quoteItems).where(eq(quoteItems.quoteId, quoteId));
+  const rawItems = await db
+    .select()
+    .from(quoteItems)
+    .where(eq(quoteItems.quoteId, quoteId))
+    .orderBy(quoteItems.sortOrder);
+  const deviceIds = [...new Set(rawItems.filter((i) => i.deviceId).map((i) => i.deviceId!))];
+  const deviceRows = deviceIds.length
+    ? await db.select({ id: devices.id, bildPfad: devices.bildPfad }).from(devices).where(inArray(devices.id, deviceIds))
+    : [];
+  const deviceBildById = new Map(deviceRows.map((d) => [d.id, d.bildPfad]));
+  const items = rawItems.map((i) => ({ ...i, deviceBildPfad: i.deviceId ? deviceBildById.get(i.deviceId) ?? null : null }));
   const settings = await getOrCreateSettings();
   return { quote: row.quote, customer: row.customer, property: row.property, items, settings };
 }

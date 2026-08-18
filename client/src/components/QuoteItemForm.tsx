@@ -10,6 +10,7 @@ export function QuoteItemForm({ quoteId }: { quoteId: number }) {
   const [typ, setTyp] = useState<QuoteItemTyp>("geraet");
   const [deviceId, setDeviceId] = useState("");
   const [partnerId, setPartnerId] = useState("");
+  const [kernbohrungVariante, setKernbohrungVariante] = useState<"2loch" | "3loch">("2loch");
   const [beschreibung, setBeschreibung] = useState("");
   const [menge, setMenge] = useState("1");
   const [einzelpreis, setEinzelpreis] = useState("");
@@ -26,7 +27,8 @@ export function QuoteItemForm({ quoteId }: { quoteId: number }) {
     if (typ === "geraet") {
       setBeschreibung("");
     } else if (typ === "kernbohrung") {
-      setBeschreibung("Kernbohrung");
+      setBeschreibung("Kernbohrung (2-Loch)");
+      setKernbohrungVariante("2loch");
     } else if (typ === "montage") {
       setBeschreibung("Montage/Arbeitszeit");
     } else if (typ === "fahrt_material") {
@@ -53,9 +55,20 @@ export function QuoteItemForm({ quoteId }: { quoteId: number }) {
 
   function handlePartnerChange(id: string) {
     setPartnerId(id);
+    applyPartnerPreis(id, kernbohrungVariante);
+  }
+
+  function handleVarianteChange(variante: "2loch" | "3loch") {
+    setKernbohrungVariante(variante);
+    setBeschreibung(variante === "3loch" ? "Kernbohrung (3-Loch)" : "Kernbohrung (2-Loch)");
+    applyPartnerPreis(partnerId, variante);
+  }
+
+  function applyPartnerPreis(id: string, variante: "2loch" | "3loch") {
     const partner = bohrpartner?.find((p) => String(p.id) === id);
-    if (partner?.preisProBohrung) {
-      setEinkaufspreisIntern(Number(partner.preisProBohrung).toFixed(2));
+    const preis = variante === "3loch" ? partner?.preisPro3Loch : partner?.preisProBohrung;
+    if (preis) {
+      setEinkaufspreisIntern(Number(preis).toFixed(2));
     }
   }
 
@@ -109,17 +122,30 @@ export function QuoteItemForm({ quoteId }: { quoteId: number }) {
         )}
 
         {typ === "kernbohrung" && (
-          <div className="field" style={{ minWidth: 200 }}>
-            <label htmlFor="item-partner">Bohrpartner (optional)</label>
-            <select id="item-partner" value={partnerId} onChange={(e) => handlePartnerChange(e.target.value)}>
-              <option value="">— keiner —</option>
-              {bohrpartner?.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          <>
+            <div className="field" style={{ minWidth: 140 }}>
+              <label htmlFor="item-variante">Variante</label>
+              <select
+                id="item-variante"
+                value={kernbohrungVariante}
+                onChange={(e) => handleVarianteChange(e.target.value as "2loch" | "3loch")}
+              >
+                <option value="2loch">2-Loch</option>
+                <option value="3loch">3-Loch</option>
+              </select>
+            </div>
+            <div className="field" style={{ minWidth: 200 }}>
+              <label htmlFor="item-partner">Bohrpartner (optional)</label>
+              <select id="item-partner" value={partnerId} onChange={(e) => handlePartnerChange(e.target.value)}>
+                <option value="">— keiner —</option>
+                {bohrpartner?.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </>
         )}
 
         {(typ === "fahrt_material" || typ === "sonderposition") && (

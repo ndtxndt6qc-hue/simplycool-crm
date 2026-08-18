@@ -6,6 +6,8 @@ export type Lead = {
   id: number;
   name: string;
   adresse: string | null;
+  plz: string | null;
+  ort: string | null;
   telefon: string | null;
   email: string | null;
   notiz: string | null;
@@ -19,6 +21,8 @@ export type Lead = {
 export type LeadInput = {
   name: string;
   adresse?: string;
+  plz?: string;
+  ort?: string;
   telefon?: string;
   email?: string;
   notiz?: string;

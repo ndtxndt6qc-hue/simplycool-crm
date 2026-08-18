@@ -11,6 +11,7 @@ export function PartnerFormModal({ partner, onClose }: { partner: Partner | null
   const [telefon, setTelefon] = useState(partner?.telefon ?? "");
   const [email, setEmail] = useState(partner?.email ?? "");
   const [preisProBohrung, setPreisProBohrung] = useState(partner?.preisProBohrung ?? "");
+  const [preisPro3Loch, setPreisPro3Loch] = useState(partner?.preisPro3Loch ?? "");
   const [lieferzeitTage, setLieferzeitTage] = useState(
     partner?.lieferzeitTage !== null && partner?.lieferzeitTage !== undefined ? String(partner.lieferzeitTage) : ""
   );
@@ -32,6 +33,7 @@ export function PartnerFormModal({ partner, onClose }: { partner: Partner | null
       telefon,
       email,
       preisProBohrung: preisProBohrung ? Number(preisProBohrung) : undefined,
+      preisPro3Loch: preisPro3Loch ? Number(preisPro3Loch) : undefined,
       lieferzeitTage: lieferzeitTage ? Number(lieferzeitTage) : undefined,
       notiz,
     };
@@ -84,15 +86,27 @@ export function PartnerFormModal({ partner, onClose }: { partner: Partner | null
           <input id="partner-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
         {typ === "bohrpartner" ? (
-          <div className="field">
-            <label htmlFor="partner-preis">Preis pro Bohrung (CHF)</label>
-            <input
-              id="partner-preis"
-              type="number"
-              step="0.01"
-              value={preisProBohrung}
-              onChange={(e) => setPreisProBohrung(e.target.value)}
-            />
+          <div style={{ display: "flex", gap: 12 }}>
+            <div className="field" style={{ flex: 1 }}>
+              <label htmlFor="partner-preis">Preis 2-Loch (CHF)</label>
+              <input
+                id="partner-preis"
+                type="number"
+                step="0.01"
+                value={preisProBohrung}
+                onChange={(e) => setPreisProBohrung(e.target.value)}
+              />
+            </div>
+            <div className="field" style={{ flex: 1 }}>
+              <label htmlFor="partner-preis-3loch">Preis 3-Loch (CHF)</label>
+              <input
+                id="partner-preis-3loch"
+                type="number"
+                step="0.01"
+                value={preisPro3Loch}
+                onChange={(e) => setPreisPro3Loch(e.target.value)}
+              />
+            </div>
           </div>
         ) : (
           <div className="field">

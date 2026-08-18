@@ -7,6 +7,7 @@ import {
   useCreateReminder,
   useDeleteInvoiceItem,
   useInvoice,
+  useUpdateInvoiceStatus,
 } from "../lib/invoices";
 import { AddPaymentModal } from "../components/AddPaymentModal";
 
@@ -15,6 +16,7 @@ const STATUS_BADGE: Record<string, string> = {
   teilzahlung: "badge-warning",
   bezahlt: "badge-success",
   ueberfaellig: "badge-danger",
+  storniert: "badge-neutral",
 };
 
 export function InvoiceDetailPage() {
@@ -24,10 +26,12 @@ export function InvoiceDetailPage() {
   const addItem = useAddInvoiceItem(invoiceId);
   const deleteItem = useDeleteInvoiceItem(invoiceId);
   const createReminder = useCreateReminder(invoiceId);
+  const updateStatus = useUpdateInvoiceStatus(invoiceId);
   const [payingOpen, setPayingOpen] = useState(false);
 
   const [beschreibung, setBeschreibung] = useState("");
   const [menge, setMenge] = useState("1");
+  const [einheit, setEinheit] = useState("");
   const [einzelpreis, setEinzelpreis] = useState("");
 
   if (isLoading || !invoice) {
@@ -35,13 +39,26 @@ export function InvoiceDetailPage() {
   }
 
   const offenerBetrag = invoice.total - invoice.bezahlt;
+  const istStorniert = invoice.displayStatus === "storniert";
+  const zahlungsfristAbgelaufen = new Date(invoice.faelligkeitsdatum) <= new Date();
 
   async function handleAddItem(e: FormEvent) {
     e.preventDefault();
-    await addItem.mutateAsync({ beschreibung, menge: Number(menge), einzelpreis: Number(einzelpreis || 0) });
+    await addItem.mutateAsync({
+      beschreibung,
+      menge: Number(menge),
+      einheit: einheit || undefined,
+      einzelpreis: Number(einzelpreis || 0),
+    });
     setBeschreibung("");
     setMenge("1");
+    setEinheit("");
     setEinzelpreis("");
+  }
+
+  async function handleStornieren() {
+    if (!confirm("Rechnung wirklich stornieren?")) return;
+    await updateStatus.mutateAsync("storniert");
   }
 
   return (
@@ -66,9 +83,14 @@ export function InvoiceDetailPage() {
           <a className="btn btn-secondary" href={`/api/invoices/${invoice.id}/pdf`} target="_blank" rel="noreferrer">
             PDF ansehen
           </a>
-          {offenerBetrag > 0 && (
+          {offenerBetrag > 0 && !istStorniert && (
             <button className="btn btn-primary" onClick={() => setPayingOpen(true)}>
               Zahlung erfassen
+            </button>
+          )}
+          {!istStorniert && invoice.displayStatus !== "bezahlt" && (
+            <button className="btn btn-secondary" onClick={handleStornieren} disabled={updateStatus.isPending}>
+              Rechnung stornieren
             </button>
           )}
         </div>
@@ -89,9 +111,12 @@ export function InvoiceDetailPage() {
             {invoice.items.map((item) => (
               <tr key={item.id}>
                 <td>{item.beschreibung}</td>
-                <td>{item.menge}</td>
+                <td>
+                  {item.menge}
+                  {item.einheit ? ` ${item.einheit}` : ""}
+                </td>
                 <td>{formatChf(item.einzelpreis)}</td>
-                <td>{formatChf(Number(item.einzelpreis) * item.menge)}</td>
+                <td>{formatChf(Number(item.einzelpreis) * Number(item.menge))}</td>
                 <td>
                   <button className="btn btn-secondary" onClick={() => deleteItem.mutate(item.id)} aria-label="Position löschen">
                     ×
@@ -111,7 +136,11 @@ export function InvoiceDetailPage() {
           </div>
           <div className="field" style={{ width: 100 }}>
             <label htmlFor="inv-item-menge">Menge</label>
-            <input id="inv-item-menge" type="number" value={menge} onChange={(e) => setMenge(e.target.value)} required />
+            <input id="inv-item-menge" type="number" step="0.01" value={menge} onChange={(e) => setMenge(e.target.value)} required />
+          </div>
+          <div className="field" style={{ width: 100 }}>
+            <label htmlFor="inv-item-einheit">Einheit</label>
+            <input id="inv-item-einheit" placeholder="z.B. Std." value={einheit} onChange={(e) => setEinheit(e.target.value)} />
           </div>
           <div className="field" style={{ width: 140 }}>
             <label htmlFor="inv-item-preis">Preis (CHF)</label>
@@ -172,22 +201,27 @@ export function InvoiceDetailPage() {
 
         <div className="card" style={{ width: 280 }}>
           <h3 style={{ marginBottom: 12 }}>Mahnwesen</h3>
-          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+          <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
             <button
               className="btn btn-secondary"
-              disabled={createReminder.isPending || offenerBetrag <= 0}
+              disabled={createReminder.isPending || offenerBetrag <= 0 || !zahlungsfristAbgelaufen || istStorniert}
               onClick={() => createReminder.mutate(1)}
             >
               1. Mahnung
             </button>
             <button
               className="btn btn-secondary"
-              disabled={createReminder.isPending || offenerBetrag <= 0}
+              disabled={createReminder.isPending || offenerBetrag <= 0 || !zahlungsfristAbgelaufen || istStorniert}
               onClick={() => createReminder.mutate(2)}
             >
               2. Mahnung
             </button>
           </div>
+          {!zahlungsfristAbgelaufen && offenerBetrag > 0 && !istStorniert && (
+            <p style={{ fontSize: 12, color: "var(--color-text-muted)", marginBottom: 12 }}>
+              Mahnungen erst möglich nach Ablauf der Zahlungsfrist ({new Date(invoice.faelligkeitsdatum).toLocaleDateString("de-CH")}).
+            </p>
+          )}
           {!invoice.reminders.length ? (
             <p style={{ color: "var(--color-text-muted)", margin: 0 }}>Noch keine Mahnungen versendet.</p>
           ) : (

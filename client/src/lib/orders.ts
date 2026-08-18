@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
-import type { ChecklistPunkt, OrderItemStatus, OrderStatus } from "@klimainstall/shared";
+import type { ChecklistPunkt, OrderDocumentTyp, OrderItemStatus, OrderStatus } from "@klimainstall/shared";
 import type { Customer } from "./customers";
 import type { Property } from "./properties";
 
@@ -9,7 +9,8 @@ export type OrderItem = {
   orderId: number;
   deviceId: number | null;
   beschreibung: string;
-  menge: number;
+  menge: string;
+  einheit: string | null;
   einzelpreis: string;
   status: OrderItemStatus;
 };
@@ -42,7 +43,21 @@ export type OrderListEntry = Order & {
   checklistTotal: number;
 };
 
-export type OrderDetail = Order & { customer: Customer; property: Property; items: OrderItem[]; checklist: ChecklistItem[] };
+export type OrderDocument = {
+  id: number;
+  orderId: number;
+  typ: OrderDocumentTyp;
+  dateipfad: string;
+  createdAt: string;
+};
+
+export type OrderDetail = Order & {
+  customer: Customer;
+  property: Property;
+  items: OrderItem[];
+  checklist: ChecklistItem[];
+  documents: OrderDocument[];
+};
 
 export function useOrders() {
   return useQuery({
@@ -110,5 +125,32 @@ export function useToggleChecklistItem(orderId: number) {
       qc.invalidateQueries({ queryKey: ["orders"] });
       qc.invalidateQueries({ queryKey: ["devices"] });
     },
+  });
+}
+
+export function useUploadOrderDocument(orderId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ file, typ }: { file: File; typ: OrderDocumentTyp }) => {
+      const formData = new FormData();
+      formData.append("datei", file);
+      formData.append("typ", typ);
+      const res = await fetch(`/api/orders/${orderId}/documents`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+      if (!res.ok) throw new Error("Upload fehlgeschlagen.");
+      return res.json() as Promise<OrderDocument>;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["orders", orderId] }),
+  });
+}
+
+export function useDeleteOrderDocument(orderId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (docId: number) => api.delete<void>(`/orders/${orderId}/documents/${docId}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["orders", orderId] }),
   });
 }

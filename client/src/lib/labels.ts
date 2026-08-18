@@ -4,6 +4,7 @@ import type {
   KundenTyp,
   LeadQuelle,
   LeadStatus,
+  OrderDocumentTyp,
   OrderStatus,
   PartnerTyp,
   QuoteItemTyp,
@@ -16,7 +17,10 @@ export const INVOICE_STATUS_LABELS: Record<InvoiceStatus, string> = {
   teilzahlung: "Teilzahlung",
   bezahlt: "Bezahlt",
   ueberfaellig: "Überfällig",
+  storniert: "Storniert",
 };
+
+export const KAELTEMITTEL_OPTIONEN = ["R290 (Propan)", "R32", "R410A", "R134a", "R454B"] as const;
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   offen: "Offen",
@@ -29,9 +33,15 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
 export const CHECKLIST_PUNKT_LABELS: Record<ChecklistPunkt, string> = {
   geraet_bestellt: "Geräte bestellt",
   bohrpartner_beauftragt: "Bohrpartner beauftragt",
-  termin_bestaetigt: "Termin bestätigt",
+  bohrpartner_termin_bestaetigt: "Bohrpartner hat Termin bestätigt",
+  kunde_termin_bestaetigt: "Kunde hat Termin bestätigt",
   installation_durchgefuehrt: "Installation durchgeführt",
   abnahme_kunde: "Abnahme durch Kunde",
+};
+
+export const ORDER_DOCUMENT_TYP_LABELS: Record<OrderDocumentTyp, string> = {
+  abnahmeprotokoll_signiert: "Unterschriebenes Abnahmeprotokoll",
+  sonstiges: "Sonstiges Dokument",
 };
 
 export const QUOTE_STATUS_LABELS: Record<QuoteStatus, string> = {

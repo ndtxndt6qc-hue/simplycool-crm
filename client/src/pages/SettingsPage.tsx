@@ -1,10 +1,13 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { useSettings, useUpdateSettings, useUploadLogo } from "../lib/settings";
+import { useSettings, useUpdateSettings, useUploadLogo, useUploadVorlage } from "../lib/settings";
+import { UsersSection } from "../components/UsersSection";
 
 export function SettingsPage() {
   const { data: settings, isLoading } = useSettings();
   const updateSettings = useUpdateSettings();
   const uploadLogo = useUploadLogo();
+  const uploadAbnahmeVorlage = useUploadVorlage("abnahmeprotokoll");
+  const uploadInstallVorlage = useUploadVorlage("installationsanweisung");
 
   const [firmenname, setFirmenname] = useState("");
   const [strasse, setStrasse] = useState("");
@@ -19,6 +22,7 @@ export function SettingsPage() {
   const [smtpPort, setSmtpPort] = useState("587");
   const [smtpUser, setSmtpUser] = useState("");
   const [smtpPass, setSmtpPass] = useState("");
+  const [garantieZeit, setGarantieZeit] = useState("");
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -35,6 +39,7 @@ export function SettingsPage() {
     setSmtpHost(settings.smtpHost ?? "");
     setSmtpPort(settings.smtpPort ? String(settings.smtpPort) : "587");
     setSmtpUser(settings.smtpUser ?? "");
+    setGarantieZeit(settings.garantieZeit ?? "");
   }, [settings]);
 
   async function handleSubmit(e: FormEvent) {
@@ -53,6 +58,7 @@ export function SettingsPage() {
       smtpHost,
       smtpPort: smtpPort ? Number(smtpPort) : undefined,
       smtpUser,
+      garantieZeit,
       ...(smtpPass ? { smtpPassEncrypted: smtpPass } : {}),
     });
     setSmtpPass("");
@@ -131,6 +137,54 @@ export function SettingsPage() {
               <input id="s-stundensatz" type="number" step="0.01" value={stundensatz} onChange={(e) => setStundensatz(e.target.value)} />
             </div>
           </div>
+          <div className="field">
+            <label htmlFor="s-garantie">Garantiezeit (z.B. "24 Monate")</label>
+            <input id="s-garantie" value={garantieZeit} onChange={(e) => setGarantieZeit(e.target.value)} />
+          </div>
+        </div>
+
+        <div className="card">
+          <h3 style={{ marginBottom: 16 }}>Checkliste & Protokoll-Vorlagen</h3>
+          <div className="field">
+            <label htmlFor="s-vorlage-abnahme">Vorlage Abnahmeprotokoll (PDF/Word)</label>
+            {settings?.abnahmeprotokollVorlagePfad && (
+              <p style={{ margin: "0 0 8px" }}>
+                <a href={settings.abnahmeprotokollVorlagePfad} target="_blank" rel="noreferrer">
+                  Aktuelle Vorlage ansehen
+                </a>
+              </p>
+            )}
+            <input
+              id="s-vorlage-abnahme"
+              type="file"
+              accept=".pdf,.doc,.docx"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (file) await uploadAbnahmeVorlage.mutateAsync(file);
+                e.target.value = "";
+              }}
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="s-vorlage-install">Vorlage Installationsanweisung/-protokoll (PDF/Word)</label>
+            {settings?.installationsanweisungVorlagePfad && (
+              <p style={{ margin: "0 0 8px" }}>
+                <a href={settings.installationsanweisungVorlagePfad} target="_blank" rel="noreferrer">
+                  Aktuelle Vorlage ansehen
+                </a>
+              </p>
+            )}
+            <input
+              id="s-vorlage-install"
+              type="file"
+              accept=".pdf,.doc,.docx"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (file) await uploadInstallVorlage.mutateAsync(file);
+                e.target.value = "";
+              }}
+            />
+          </div>
         </div>
 
         <div className="card">
@@ -158,6 +212,10 @@ export function SettingsPage() {
           {updateSettings.isPending ? "Speichern…" : "Speichern"}
         </button>
       </form>
+
+      <div style={{ maxWidth: 560, marginTop: 20 }}>
+        <UsersSection />
+      </div>
     </div>
   );
 }

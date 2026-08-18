@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { CHECKLIST_PUNKT_LABELS, ORDER_STATUS_LABELS } from "../lib/labels";
+import { CHECKLIST_PUNKT_LABELS, ORDER_DOCUMENT_TYP_LABELS, ORDER_STATUS_LABELS } from "../lib/labels";
 import { formatChf } from "../lib/format";
-import { useOrder, useToggleChecklistItem, useUpdateOrder } from "../lib/orders";
+import { useDeleteOrderDocument, useOrder, useToggleChecklistItem, useUpdateOrder, useUploadOrderDocument } from "../lib/orders";
 import { usePartners } from "../lib/partners";
+import { useSettings } from "../lib/settings";
 import { useCreateInvoiceFromOrder, useInvoiceByOrder } from "../lib/invoices";
 import { ApiError } from "../lib/api";
 
@@ -22,11 +23,15 @@ export function OrderDetailPage() {
   const toggleChecklist = useToggleChecklistItem(orderId);
   const updateOrder = useUpdateOrder(orderId);
   const { data: bohrpartner } = usePartners("bohrpartner");
+  const { data: settings } = useSettings();
   const { data: existingInvoice } = useInvoiceByOrder(orderId);
   const createInvoice = useCreateInvoiceFromOrder();
+  const uploadDocument = useUploadOrderDocument(orderId);
+  const deleteDocument = useDeleteOrderDocument(orderId);
 
   const [installationTermin, setInstallationTermin] = useState("");
   const [bohrTermin, setBohrTermin] = useState("");
+  const [bohrGleichInstallation, setBohrGleichInstallation] = useState(false);
   const [bohrpartnerId, setBohrpartnerId] = useState("");
   const [invoiceError, setInvoiceError] = useState<string | null>(null);
 
@@ -44,6 +49,9 @@ export function OrderDetailPage() {
     if (!order) return;
     setInstallationTermin(toLocalInputValue(order.installationTermin));
     setBohrTermin(toLocalInputValue(order.bohrTermin));
+    setBohrGleichInstallation(
+      !!order.installationTermin && !!order.bohrTermin && order.installationTermin === order.bohrTermin
+    );
     setBohrpartnerId(order.bohrpartnerId ? String(order.bohrpartnerId) : "");
   }, [order]);
 
@@ -105,16 +113,42 @@ export function OrderDetailPage() {
               value={installationTermin}
               onChange={(e) => {
                 setInstallationTermin(e.target.value);
-                updateOrder.mutate({ installationTermin: e.target.value ? new Date(e.target.value).toISOString() : null });
+                const iso = e.target.value ? new Date(e.target.value).toISOString() : null;
+                if (bohrGleichInstallation) {
+                  setBohrTermin(e.target.value);
+                  updateOrder.mutate({ installationTermin: iso, bohrTermin: iso });
+                } else {
+                  updateOrder.mutate({ installationTermin: iso });
+                }
               }}
             />
           </div>
+          <div className="field" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <input
+              id="order-bohr-gleich"
+              type="checkbox"
+              checked={bohrGleichInstallation}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setBohrGleichInstallation(checked);
+                if (checked) {
+                  setBohrTermin(installationTermin);
+                  const iso = installationTermin ? new Date(installationTermin).toISOString() : null;
+                  updateOrder.mutate({ bohrTermin: iso });
+                }
+              }}
+            />
+            <label htmlFor="order-bohr-gleich" style={{ margin: 0 }}>
+              Bohrtermin = Installationstermin
+            </label>
+          </div>
           <div className="field">
-            <label htmlFor="order-bohr-termin">Bohrtermin (separat, optional)</label>
+            <label htmlFor="order-bohr-termin">Bohrtermin {bohrGleichInstallation ? "" : "(separat, optional)"}</label>
             <input
               id="order-bohr-termin"
               type="datetime-local"
               value={bohrTermin}
+              disabled={bohrGleichInstallation}
               onChange={(e) => {
                 setBohrTermin(e.target.value);
                 updateOrder.mutate({ bohrTermin: e.target.value ? new Date(e.target.value).toISOString() : null });
@@ -158,6 +192,60 @@ export function OrderDetailPage() {
               </span>
             </label>
           ))}
+        </div>
+
+        <div className="card" style={{ flex: 1, minWidth: 280 }}>
+          <h3 style={{ marginBottom: 16 }}>Vorlagen & Protokolle</h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
+            {settings?.abnahmeprotokollVorlagePfad ? (
+              <a href={settings.abnahmeprotokollVorlagePfad} target="_blank" rel="noreferrer">
+                Vorlage Abnahmeprotokoll öffnen
+              </a>
+            ) : (
+              <span style={{ color: "var(--color-text-muted)" }}>Keine Vorlage Abnahmeprotokoll hinterlegt.</span>
+            )}
+            {settings?.installationsanweisungVorlagePfad ? (
+              <a href={settings.installationsanweisungVorlagePfad} target="_blank" rel="noreferrer">
+                Vorlage Installationsanweisung öffnen
+              </a>
+            ) : (
+              <span style={{ color: "var(--color-text-muted)" }}>Keine Vorlage Installationsanweisung hinterlegt.</span>
+            )}
+          </div>
+
+          {order.documents.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
+              {order.documents.map((doc) => (
+                <div key={doc.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+                  <a href={doc.dateipfad} target="_blank" rel="noreferrer">
+                    {ORDER_DOCUMENT_TYP_LABELS[doc.typ]}
+                  </a>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    style={{ padding: "2px 8px" }}
+                    onClick={() => deleteDocument.mutate(doc.id)}
+                  >
+                    Löschen
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="field">
+            <label htmlFor="order-abnahme-upload">Unterschriebenes Abnahmeprotokoll hochladen</label>
+            <input
+              id="order-abnahme-upload"
+              type="file"
+              accept=".pdf,image/*"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (file) await uploadDocument.mutateAsync({ file, typ: "abnahmeprotokoll_signiert" });
+                e.target.value = "";
+              }}
+            />
+          </div>
         </div>
       </div>
 

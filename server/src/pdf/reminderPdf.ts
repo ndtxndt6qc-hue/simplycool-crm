@@ -55,7 +55,7 @@ export async function renderReminderPdf(data: ReminderData): Promise<Buffer> {
   doc.text(customer.strasse, 40);
   doc.text(`${customer.plz} ${customer.ort}`, 40);
 
-  doc.fontSize(9).fillColor("#475569").text(`Aarau, ${dateCh(new Date())}`, 40, 190);
+  doc.fontSize(9).fillColor("#475569").text(`${cfg.ort || ""}, ${dateCh(new Date())}`, 40, 190);
 
   doc.fontSize(18).fillColor("#0f172a").text(titel, 40, 220);
   doc.moveDown(1);

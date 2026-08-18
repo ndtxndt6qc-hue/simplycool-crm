@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { QUOTE_ITEM_TYP_LABELS, QUOTE_STATUS_LABELS } from "../lib/labels";
+import { QUOTE_STATUS_LABELS } from "../lib/labels";
 import { formatChf } from "../lib/format";
 import { QUOTE_STATUS, type QuoteStatus } from "@klimainstall/shared";
-import { useDeleteQuote, useDeleteQuoteItem, useQuote, useUpdateQuote } from "../lib/quotes";
+import { useDeleteQuote, useQuote, useUpdateQuote } from "../lib/quotes";
 import { useCreateOrderFromQuote, useOrderByQuote } from "../lib/orders";
 import { QuoteItemForm } from "../components/QuoteItemForm";
+import { QuoteItemRow } from "../components/QuoteItemRow";
 import { SendQuoteModal } from "../components/SendQuoteModal";
 import { ApiError } from "../lib/api";
 
@@ -15,7 +16,6 @@ export function QuoteDetailPage() {
   const navigate = useNavigate();
   const { data: quote, isLoading } = useQuote(quoteId);
   const updateQuote = useUpdateQuote(quoteId);
-  const deleteQuoteItem = useDeleteQuoteItem(quoteId);
   const deleteQuote = useDeleteQuote();
   const { data: existingOrder } = useOrderByQuote(quoteId);
   const createOrder = useCreateOrderFromQuote();
@@ -119,29 +119,15 @@ export function QuoteDetailPage() {
             </tr>
           </thead>
           <tbody>
-            {quote.items.map((item) => {
-              const total = Number(item.einzelpreis) * item.menge;
-              const db = (Number(item.einzelpreis) - Number(item.einkaufspreisIntern)) * item.menge;
-              return (
-                <tr key={item.id}>
-                  <td>{QUOTE_ITEM_TYP_LABELS[item.typ]}</td>
-                  <td>{item.beschreibung}</td>
-                  <td>{item.menge}</td>
-                  <td>{formatChf(item.einzelpreis)}</td>
-                  <td>{formatChf(total)}</td>
-                  <td style={{ color: db >= 0 ? "var(--color-success)" : "var(--color-danger)" }}>{formatChf(db)}</td>
-                  <td>
-                    <button
-                      className="btn btn-secondary"
-                      onClick={() => deleteQuoteItem.mutate(item.id)}
-                      aria-label="Position löschen"
-                    >
-                      ×
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
+            {quote.items.map((item, idx) => (
+              <QuoteItemRow
+                key={item.id}
+                quoteId={quote.id}
+                item={item}
+                isFirst={idx === 0}
+                isLast={idx === quote.items.length - 1}
+              />
+            ))}
             {!quote.items.length && (
               <tr>
                 <td colSpan={7} style={{ color: "var(--color-text-muted)" }}>

@@ -1,6 +1,10 @@
 import { Router } from "express";
 import { z } from "zod";
 import { eq, sql } from "drizzle-orm";
+import multer from "multer";
+import path from "node:path";
+import fs from "node:fs";
+import crypto from "node:crypto";
 import { db } from "../db/client.js";
 import { devices, orderItems, stockMovements } from "../db/schema.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -111,6 +115,46 @@ devicesRouter.delete(
   asyncHandler(async (req, res) => {
     await db.delete(devices).where(eq(devices.id, Number(req.params.id)));
     res.status(204).send();
+  })
+);
+
+const DEVICE_IMAGE_DIR = path.resolve(process.cwd(), "uploads", "devices");
+fs.mkdirSync(DEVICE_IMAGE_DIR, { recursive: true });
+
+const deviceImageUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, DEVICE_IMAGE_DIR),
+    filename: (_req, file, cb) => cb(null, `${crypto.randomUUID()}${path.extname(file.originalname).toLowerCase()}`),
+  }),
+  limits: { fileSize: 8 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.mimetype)) {
+      cb(new Error("Nur PNG, JPEG oder WEBP erlaubt."));
+      return;
+    }
+    cb(null, true);
+  },
+});
+
+devicesRouter.post(
+  "/:id/bild",
+  deviceImageUpload.single("bild"),
+  asyncHandler(async (req, res) => {
+    if (!req.file) {
+      res.status(400).json({ error: "Keine Datei erhalten." });
+      return;
+    }
+    const bildPfad = `/uploads/devices/${req.file.filename}`;
+    const [device] = await db
+      .update(devices)
+      .set({ bildPfad })
+      .where(eq(devices.id, Number(req.params.id)))
+      .returning();
+    if (!device) {
+      res.status(404).json({ error: "Gerät nicht gefunden." });
+      return;
+    }
+    res.status(201).json(device);
   })
 );
 

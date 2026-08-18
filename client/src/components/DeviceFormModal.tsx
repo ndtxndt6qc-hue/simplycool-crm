@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from "react";
 import { Modal } from "./Modal";
 import { usePartners } from "../lib/partners";
-import { useCreateDevice, useUpdateDevice, type Device } from "../lib/devices";
+import { KAELTEMITTEL_OPTIONEN } from "../lib/labels";
+import { useCreateDevice, useUpdateDevice, useUploadDeviceImage, type Device } from "../lib/devices";
 
 export function DeviceFormModal({ device, onClose }: { device: Device | null; onClose: () => void }) {
   const { data: lieferanten } = usePartners("lieferant");
@@ -19,7 +20,14 @@ export function DeviceFormModal({ device, onClose }: { device: Device | null; on
 
   const createDevice = useCreateDevice();
   const updateDevice = useUpdateDevice();
+  const uploadImage = useUploadDeviceImage(device?.id ?? 0);
   const saving = createDevice.isPending || updateDevice.isPending;
+
+  async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) await uploadImage.mutateAsync(file);
+    e.target.value = "";
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -89,8 +97,27 @@ export function DeviceFormModal({ device, onClose }: { device: Device | null; on
         </div>
         <div className="field">
           <label htmlFor="device-kaeltemittel">Kältemittel</label>
-          <input id="device-kaeltemittel" value={kaeltemittel} onChange={(e) => setKaeltemittel(e.target.value)} />
+          <select id="device-kaeltemittel" value={kaeltemittel} onChange={(e) => setKaeltemittel(e.target.value)}>
+            <option value="">— auswählen —</option>
+            {KAELTEMITTEL_OPTIONEN.map((k) => (
+              <option key={k} value={k}>
+                {k}
+              </option>
+            ))}
+            {kaeltemittel && !KAELTEMITTEL_OPTIONEN.includes(kaeltemittel as (typeof KAELTEMITTEL_OPTIONEN)[number]) && (
+              <option value={kaeltemittel}>{kaeltemittel}</option>
+            )}
+          </select>
         </div>
+        {device && (
+          <div className="field">
+            <label htmlFor="device-bild">Gerätebild</label>
+            {device.bildPfad && (
+              <img src={device.bildPfad} alt={`${device.hersteller} ${device.modell}`} style={{ maxHeight: 100, marginBottom: 8, borderRadius: 8 }} />
+            )}
+            <input id="device-bild" type="file" accept="image/*" onChange={handleImageChange} />
+          </div>
+        )}
         <div style={{ display: "flex", gap: 12 }}>
           <div className="field" style={{ flex: 1 }}>
             <label htmlFor="device-einkauf">Einkaufspreis (CHF)</label>

@@ -26,6 +26,7 @@ const settingsSchema = z.object({
   smtpPort: z.number().int().optional(),
   smtpUser: z.string().optional(),
   smtpPassEncrypted: z.string().optional(),
+  garantieZeit: z.string().optional(),
 });
 
 settingsRouter.get(
@@ -92,5 +93,52 @@ settingsRouter.post(
     const logoPfad = `/uploads/logo/${req.file.filename}`;
     await db.update(settings).set({ logoPfad }).where(eq(settings.id, current.id));
     res.status(201).json({ logoPfad });
+  })
+);
+
+const VORLAGEN_DIR = path.resolve(process.cwd(), "uploads", "vorlagen");
+fs.mkdirSync(VORLAGEN_DIR, { recursive: true });
+
+const vorlageUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, VORLAGEN_DIR),
+    filename: (_req, file, cb) => cb(null, `${crypto.randomUUID()}${path.extname(file.originalname).toLowerCase()}`),
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (!["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"].includes(file.mimetype)) {
+      cb(new Error("Nur PDF oder Word-Dokumente erlaubt."));
+      return;
+    }
+    cb(null, true);
+  },
+});
+
+const VORLAGE_TYP_FIELD = {
+  abnahmeprotokoll: "abnahmeprotokollVorlagePfad",
+  installationsanweisung: "installationsanweisungVorlagePfad",
+} as const;
+
+settingsRouter.post(
+  "/vorlagen/:typ",
+  vorlageUpload.single("datei"),
+  asyncHandler(async (req, res) => {
+    const typ = req.params.typ as keyof typeof VORLAGE_TYP_FIELD;
+    const field = VORLAGE_TYP_FIELD[typ];
+    if (!field) {
+      res.status(400).json({ error: "Ungültiger Vorlagentyp." });
+      return;
+    }
+    if (!req.file) {
+      res.status(400).json({ error: "Keine Datei erhalten." });
+      return;
+    }
+    const current = await getOrCreateSettings();
+    const pfad = `/uploads/vorlagen/${req.file.filename}`;
+    await db
+      .update(settings)
+      .set({ [field]: pfad })
+      .where(eq(settings.id, current.id));
+    res.status(201).json({ [field]: pfad });
   })
 );

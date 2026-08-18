@@ -28,13 +28,13 @@ dashboardRouter.get(
 
     function quoteTotal(quoteId: number, mwstSatz: string) {
       const items = itemsByQuote.get(quoteId) ?? [];
-      const netto = items.reduce((acc, i) => acc + Number(i.einzelpreis) * i.menge, 0);
+      const netto = items.reduce((acc, i) => acc + Number(i.einzelpreis) * Number(i.menge), 0);
       return netto * (1 + Number(mwstSatz) / 100);
     }
 
     function quoteDeckungsbeitrag(quoteId: number) {
       const items = itemsByQuote.get(quoteId) ?? [];
-      return items.reduce((acc, i) => acc + (Number(i.einzelpreis) - Number(i.einkaufspreisIntern)) * i.menge, 0);
+      return items.reduce((acc, i) => acc + (Number(i.einzelpreis) - Number(i.einkaufspreisIntern)) * Number(i.menge), 0);
     }
 
     const offeneAngebote = allQuotes.filter((q) => q.status === "entwurf" || q.status === "versendet");
@@ -55,7 +55,7 @@ dashboardRouter.get(
 
     function invoiceNetto(invoiceId: number) {
       const items = itemsByInvoice.get(invoiceId) ?? [];
-      return items.reduce((acc, i) => acc + Number(i.einzelpreis) * i.menge, 0);
+      return items.reduce((acc, i) => acc + Number(i.einzelpreis) * Number(i.menge), 0);
     }
     function invoiceTotal(invoice: (typeof allInvoices)[number]) {
       return invoiceNetto(invoice.id) * (1 + Number(invoice.mwstSatz) / 100);

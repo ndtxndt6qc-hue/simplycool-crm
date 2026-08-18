@@ -24,10 +24,16 @@ function dateCh(value: string | Date | null) {
   return new Intl.DateTimeFormat("de-CH").format(new Date(value));
 }
 
+function formatMenge(value: string | number, einheit: string | null) {
+  const n = Number(value);
+  const formatted = Number.isInteger(n) ? String(n) : n.toString().replace(".", ",");
+  return einheit ? `${formatted} ${einheit}` : formatted;
+}
+
 export async function renderInvoicePdf(data: InvoiceData): Promise<Buffer> {
   const { invoice, items, customer, property, settings: cfg } = data;
 
-  const netto = items.reduce((acc, i) => acc + Number(i.einzelpreis) * i.menge, 0);
+  const netto = items.reduce((acc, i) => acc + Number(i.einzelpreis) * Number(i.menge), 0);
   const mwstSatz = Number(invoice.mwstSatz);
   const mwstBetrag = netto * (mwstSatz / 100);
   const total = netto + mwstBetrag;
@@ -72,32 +78,36 @@ export async function renderInvoicePdf(data: InvoiceData): Promise<Buffer> {
   );
 
   const tableTop = 240;
-  const colWidths = [220, 60, 90, 90];
-  const rows = [
-    { header: true, values: ["Beschreibung", "Menge", "Preis (CHF)", "Total (CHF)"] },
-    ...items.map((i) => [
-      i.beschreibung,
-      String(i.menge),
-      chf(Number(i.einzelpreis)),
-      chf(Number(i.einzelpreis) * i.menge),
-    ]),
-  ];
+  const colWidths = [220, 90, 80, 80];
+  const dataRows = items.map((i) => [
+    i.beschreibung,
+    formatMenge(i.menge, i.einheit),
+    chf(Number(i.einzelpreis)),
+    chf(Number(i.einzelpreis) * Number(i.menge)),
+  ]);
 
   let y = tableTop;
-  doc.fontSize(9);
-  for (const row of rows) {
-    const isHeader = "header" in row;
-    const values = isHeader ? row.values : row;
-    let x = 40;
-    doc.fillColor(isHeader ? "#94a3b8" : "#0f172a").font(isHeader ? "Helvetica-Bold" : "Helvetica");
-    values.forEach((val, idx) => {
-      doc.text(val, x, y, { width: colWidths[idx], align: idx === 0 ? "left" : "right" });
-      x += colWidths[idx];
-    });
-    y += 20;
-    if (isHeader) {
-      doc.moveTo(40, y - 4).lineTo(500, y - 4).strokeColor("#cbd5e1").stroke();
+  doc.fontSize(9).fillColor("#94a3b8").font("Helvetica-Bold");
+  ["Beschreibung", "Menge", "Preis (CHF)", "Total (CHF)"].forEach((val, idx) => {
+    const x = 40 + colWidths.slice(0, idx).reduce((a, b) => a + b, 0);
+    doc.text(val, x, y, { width: colWidths[idx], align: idx === 0 ? "left" : "right" });
+  });
+  y += 20;
+  doc.moveTo(40, y - 4).lineTo(500, y - 4).strokeColor("#cbd5e1").stroke();
+
+  doc.font("Helvetica").fillColor("#0f172a");
+  for (const values of dataRows) {
+    const rowHeight = Math.max(doc.heightOfString(values[0], { width: colWidths[0] }), 12) + 10;
+    if (y + rowHeight > 760) {
+      doc.addPage();
+      y = 40;
     }
+    values.forEach((val, idx) => {
+      const x = 40 + colWidths.slice(0, idx).reduce((a, b) => a + b, 0);
+      doc.text(val, x, y, { width: colWidths[idx], align: idx === 0 ? "left" : "right" });
+    });
+    y += rowHeight;
+    doc.moveTo(40, y - 6).lineTo(500, y - 6).strokeColor("#f1f5f9").stroke();
   }
 
   y += 10;
@@ -113,6 +123,12 @@ export async function renderInvoicePdf(data: InvoiceData): Promise<Buffer> {
   doc.font("Helvetica-Bold").fontSize(12);
   doc.text("Total", 320, y, { width: 90 });
   doc.text(`CHF ${chf(total)}`, 410, y, { width: 90, align: "right" });
+
+  if (cfg.garantieZeit) {
+    y += 28;
+    doc.font("Helvetica").fontSize(9).fillColor("#475569");
+    doc.text(`Garantie: ${cfg.garantieZeit}`, 40, y, { width: 300 });
+  }
 
   const account = paymentAccount(cfg.iban, cfg.qrIban);
   if (account) {

@@ -7,7 +7,7 @@ type QuoteData = {
   quote: InferSelectModel<typeof quotes>;
   customer: InferSelectModel<typeof customers>;
   property: InferSelectModel<typeof properties>;
-  items: InferSelectModel<typeof quoteItems>[];
+  items: (InferSelectModel<typeof quoteItems> & { deviceBildPfad?: string | null })[];
   settings: InferSelectModel<typeof settings>;
 };
 
@@ -28,6 +28,12 @@ function dateCh(value: string | Date | null) {
   return new Intl.DateTimeFormat("de-CH").format(new Date(value));
 }
 
+function formatMenge(value: string | number, einheit: string | null) {
+  const n = Number(value);
+  const formatted = Number.isInteger(n) ? String(n) : n.toString().replace(".", ",");
+  return einheit ? `${formatted} ${einheit}` : formatted;
+}
+
 function logoDataUri(logoPfad: string | null): string | null {
   if (!logoPfad) return null;
   try {
@@ -39,6 +45,21 @@ function logoDataUri(logoPfad: string | null): string | null {
   } catch {
     return null;
   }
+}
+
+const TECHNIKER_ICON_SVG = `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#475569" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="3.2"/><path d="M5 21c0-4 3.1-7 7-7s7 3 7 7"/></svg>`;
+const MATERIAL_ICON_SVG = `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#475569" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l1.5-4.5A2 2 0 0 1 6.4 7h11.2a2 2 0 0 1 1.9 1.5L21 13"/><rect x="2.5" y="13" width="19" height="5" rx="1"/><circle cx="7" cy="18.5" r="1.5"/><circle cx="17" cy="18.5" r="1.5"/></svg>`;
+const KERNBOHRUNG_ICON_SVG = `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#475569" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.2"/></svg>`;
+
+function itemImageHtml(item: InferSelectModel<typeof quoteItems> & { deviceBildPfad?: string | null }): string {
+  if (item.typ === "geraet") {
+    const img = item.deviceBildPfad ? logoDataUri(item.deviceBildPfad) : null;
+    return img ? `<img class="item-img" src="${img}" />` : "";
+  }
+  if (item.typ === "montage") return TECHNIKER_ICON_SVG;
+  if (item.typ === "fahrt_material") return MATERIAL_ICON_SVG;
+  if (item.typ === "kernbohrung") return KERNBOHRUNG_ICON_SVG;
+  return "";
 }
 
 export function renderQuoteHtml({ quote, customer, property, items, settings: cfg }: QuoteData): string {
@@ -56,9 +77,10 @@ export function renderQuoteHtml({ quote, customer, property, items, settings: cf
     .map(
       (i) => `
       <tr>
+        <td class="img-cell">${itemImageHtml(i)}</td>
         <td>${ITEM_TYP_LABELS[i.typ] ?? i.typ}</td>
         <td>${escapeHtml(i.beschreibung)}</td>
-        <td class="num">${i.menge}</td>
+        <td class="num">${escapeHtml(formatMenge(i.menge, i.einheit))}</td>
         <td class="num">${chf(Number(i.einzelpreis))}</td>
         <td class="num">${chf(Number(i.einzelpreis) * Number(i.menge))}</td>
       </tr>`
@@ -85,6 +107,8 @@ export function renderQuoteHtml({ quote, customer, property, items, settings: cf
       th { text-align: left; font-size: 9px; text-transform: uppercase; letter-spacing: 0.04em; color: #94a3b8; border-bottom: 1px solid #cbd5e1; padding: 6px 8px; }
       td { padding: 8px; border-bottom: 1px solid #e2e8f0; font-size: 11px; }
       .num { text-align: right; }
+      .img-cell { width: 34px; padding: 6px 4px; }
+      .item-img { width: 28px; height: 28px; object-fit: cover; border-radius: 4px; display: block; }
       .totals { width: 260px; margin-left: auto; margin-top: 16px; }
       .totals div { display: flex; justify-content: space-between; padding: 4px 8px; font-size: 12px; }
       .totals .grand { font-weight: 700; font-size: 14px; border-top: 1px solid #0f172a; margin-top: 4px; padding-top: 8px; }
@@ -124,6 +148,7 @@ export function renderQuoteHtml({ quote, customer, property, items, settings: cf
     <table>
       <thead>
         <tr>
+          <th></th>
           <th>Art</th>
           <th>Beschreibung</th>
           <th class="num">Menge</th>

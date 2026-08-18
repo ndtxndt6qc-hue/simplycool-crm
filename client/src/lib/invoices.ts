@@ -9,7 +9,8 @@ export type InvoiceItem = {
   id: number;
   invoiceId: number;
   beschreibung: string;
-  menge: number;
+  menge: string;
+  einheit: string | null;
   einzelpreis: string;
   mwstSatz: string;
 };
@@ -105,7 +106,7 @@ export function useCreateInvoiceFromOrder() {
 export function useAddInvoiceItem(invoiceId: number) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { beschreibung: string; menge: number; einzelpreis: number }) =>
+    mutationFn: (input: { beschreibung: string; menge: number; einheit?: string; einzelpreis: number }) =>
       api.post<InvoiceItem>(`/invoices/${invoiceId}/items`, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["invoices", invoiceId] }),
   });
@@ -123,6 +124,17 @@ export function useAddPayment(invoiceId: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: { betrag: number; notiz?: string }) => api.post<Payment>(`/invoices/${invoiceId}/payments`, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["invoices", invoiceId] });
+      qc.invalidateQueries({ queryKey: ["invoices"] });
+    },
+  });
+}
+
+export function useUpdateInvoiceStatus(invoiceId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (status: InvoiceStatus) => api.patch<Invoice>(`/invoices/${invoiceId}`, { status }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["invoices", invoiceId] });
       qc.invalidateQueries({ queryKey: ["invoices"] });

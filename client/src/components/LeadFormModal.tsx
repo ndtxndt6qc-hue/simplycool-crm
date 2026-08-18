@@ -15,6 +15,8 @@ export function LeadFormModal({
 }) {
   const [name, setName] = useState(lead?.name ?? "");
   const [adresse, setAdresse] = useState(lead?.adresse ?? "");
+  const [plz, setPlz] = useState(lead?.plz ?? "");
+  const [ort, setOrt] = useState(lead?.ort ?? "");
   const [telefon, setTelefon] = useState(lead?.telefon ?? "");
   const [email, setEmail] = useState(lead?.email ?? "");
   const [notiz, setNotiz] = useState(lead?.notiz ?? "");
@@ -30,7 +32,7 @@ export function LeadFormModal({
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    const input = { name, adresse, telefon, email, notiz, quelle };
+    const input = { name, adresse, plz, ort, telefon, email, notiz, quelle };
     try {
       if (lead) {
         await updateLead.mutateAsync({ id: lead.id, ...input, status });
@@ -58,8 +60,18 @@ export function LeadFormModal({
           <input id="lead-name" value={name} onChange={(e) => setName(e.target.value)} required />
         </div>
         <div className="field">
-          <label htmlFor="lead-adresse">Adresse</label>
+          <label htmlFor="lead-adresse">Strasse</label>
           <input id="lead-adresse" value={adresse} onChange={(e) => setAdresse(e.target.value)} />
+        </div>
+        <div style={{ display: "flex", gap: 12 }}>
+          <div className="field" style={{ flex: 1 }}>
+            <label htmlFor="lead-plz">PLZ</label>
+            <input id="lead-plz" value={plz} onChange={(e) => setPlz(e.target.value)} />
+          </div>
+          <div className="field" style={{ flex: 2 }}>
+            <label htmlFor="lead-ort">Ort</label>
+            <input id="lead-ort" value={ort} onChange={(e) => setOrt(e.target.value)} />
+          </div>
         </div>
         <div className="field">
           <label htmlFor="lead-telefon">Telefon</label>

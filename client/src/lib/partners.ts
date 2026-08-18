@@ -10,6 +10,7 @@ export type Partner = {
   telefon: string | null;
   email: string | null;
   preisProBohrung: string | null;
+  preisPro3Loch: string | null;
   lieferzeitTage: number | null;
   notiz: string | null;
 };
@@ -21,6 +22,7 @@ export type PartnerInput = {
   telefon?: string;
   email?: string;
   preisProBohrung?: number;
+  preisPro3Loch?: number;
   lieferzeitTage?: number;
   notiz?: string;
 };

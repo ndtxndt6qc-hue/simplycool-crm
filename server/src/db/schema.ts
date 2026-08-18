@@ -42,10 +42,19 @@ export const checklistPunktEnum = pgEnum("checklist_punkt", [
   "geraet_bestellt",
   "bohrpartner_beauftragt",
   "termin_bestaetigt",
+  "bohrpartner_termin_bestaetigt",
+  "kunde_termin_bestaetigt",
   "installation_durchgefuehrt",
   "abnahme_kunde",
 ]);
-export const invoiceStatusEnum = pgEnum("invoice_status", ["offen", "teilzahlung", "bezahlt", "ueberfaellig"]);
+export const invoiceStatusEnum = pgEnum("invoice_status", [
+  "offen",
+  "teilzahlung",
+  "bezahlt",
+  "ueberfaellig",
+  "storniert",
+]);
+export const orderDocumentTypEnum = pgEnum("order_document_typ", ["abnahmeprotokoll_signiert", "sonstiges"]);
 export const stockMovementTypEnum = pgEnum("stock_movement_typ", [
   "wareneingang",
   "verbrauch_installation",
@@ -82,6 +91,8 @@ export const leads = pgTable("leads", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   adresse: text("adresse"),
+  plz: varchar("plz", { length: 10 }),
+  ort: varchar("ort", { length: 255 }),
   telefon: varchar("telefon", { length: 50 }),
   email: varchar("email", { length: 255 }),
   notiz: text("notiz"),
@@ -122,6 +133,7 @@ export const partners = pgTable("partners", {
   telefon: varchar("telefon", { length: 50 }),
   email: varchar("email", { length: 255 }),
   preisProBohrung: numeric("preis_pro_bohrung", { precision: 10, scale: 2 }),
+  preisPro3Loch: numeric("preis_pro_3loch", { precision: 10, scale: 2 }),
   lieferzeitTage: integer("lieferzeit_tage"),
   notiz: text("notiz"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -137,6 +149,7 @@ export const devices = pgTable("devices", {
   einkaufspreis: numeric("einkaufspreis", { precision: 10, scale: 2 }).notNull(),
   empfVerkaufspreis: numeric("empf_verkaufspreis", { precision: 10, scale: 2 }).notNull(),
   lieferantId: integer("lieferant_id").references(() => partners.id, { onDelete: "set null" }),
+  bildPfad: text("bild_pfad"),
   lagerbestand: integer("lagerbestand").notNull().default(0),
   mindestbestand: integer("mindestbestand").notNull().default(0),
   notiz: text("notiz"),
@@ -177,7 +190,8 @@ export const quoteItems = pgTable("quote_items", {
   typ: quoteItemTypEnum("typ").notNull(),
   deviceId: integer("device_id").references(() => devices.id, { onDelete: "set null" }),
   beschreibung: varchar("beschreibung", { length: 500 }).notNull(),
-  menge: integer("menge").notNull().default(1),
+  menge: numeric("menge", { precision: 10, scale: 2 }).notNull().default("1"),
+  einheit: varchar("einheit", { length: 50 }),
   einzelpreis: numeric("einzelpreis", { precision: 10, scale: 2 }).notNull(),
   einkaufspreisIntern: numeric("einkaufspreis_intern", { precision: 10, scale: 2 }).notNull().default("0"),
   sortOrder: integer("sort_order").notNull().default(0),
@@ -201,7 +215,8 @@ export const orderItems = pgTable("order_items", {
   orderId: integer("order_id").notNull().references(() => orders.id),
   deviceId: integer("device_id").references(() => devices.id, { onDelete: "set null" }),
   beschreibung: varchar("beschreibung", { length: 500 }).notNull(),
-  menge: integer("menge").notNull().default(1),
+  menge: numeric("menge", { precision: 10, scale: 2 }).notNull().default("1"),
+  einheit: varchar("einheit", { length: 50 }),
   einzelpreis: numeric("einzelpreis", { precision: 10, scale: 2 }).notNull(),
   status: orderItemStatusEnum("status").notNull().default("reserviert"),
 });
@@ -231,7 +246,8 @@ export const invoiceItems = pgTable("invoice_items", {
   id: serial("id").primaryKey(),
   invoiceId: integer("invoice_id").notNull().references(() => invoices.id),
   beschreibung: varchar("beschreibung", { length: 500 }).notNull(),
-  menge: integer("menge").notNull().default(1),
+  menge: numeric("menge", { precision: 10, scale: 2 }).notNull().default("1"),
+  einheit: varchar("einheit", { length: 50 }),
   einzelpreis: numeric("einzelpreis", { precision: 10, scale: 2 }).notNull(),
   mwstSatz: numeric("mwst_satz", { precision: 4, scale: 2 }).notNull().default("8.10"),
 });
@@ -264,8 +280,21 @@ export const settings = pgTable("settings", {
   mwstNummer: varchar("mwst_nummer", { length: 50 }),
   defaultMwstSatz: numeric("default_mwst_satz", { precision: 4, scale: 2 }).notNull().default("8.10"),
   stundensatz: numeric("stundensatz", { precision: 10, scale: 2 }).notNull().default("0"),
+  garantieZeit: varchar("garantie_zeit", { length: 100 }),
+  abnahmeprotokollVorlagePfad: text("abnahmeprotokoll_vorlage_pfad"),
+  installationsanweisungVorlagePfad: text("installationsanweisung_vorlage_pfad"),
   smtpHost: varchar("smtp_host", { length: 255 }),
   smtpPort: integer("smtp_port"),
   smtpUser: varchar("smtp_user", { length: 255 }),
   smtpPassEncrypted: text("smtp_pass_encrypted"),
+});
+
+export const orderDocuments = pgTable("order_documents", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id")
+    .notNull()
+    .references(() => orders.id, { onDelete: "cascade" }),
+  typ: orderDocumentTypEnum("typ").notNull().default("abnahmeprotokoll_signiert"),
+  dateipfad: text("dateipfad").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });

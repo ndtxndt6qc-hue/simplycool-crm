@@ -32,14 +32,18 @@ export type OrderItemStatus = (typeof ORDER_ITEM_STATUS)[number];
 export const CHECKLIST_PUNKTE = [
   "geraet_bestellt",
   "bohrpartner_beauftragt",
-  "termin_bestaetigt",
+  "bohrpartner_termin_bestaetigt",
+  "kunde_termin_bestaetigt",
   "installation_durchgefuehrt",
   "abnahme_kunde",
 ] as const;
 export type ChecklistPunkt = (typeof CHECKLIST_PUNKTE)[number];
 
-export const INVOICE_STATUS = ["offen", "teilzahlung", "bezahlt", "ueberfaellig"] as const;
+export const INVOICE_STATUS = ["offen", "teilzahlung", "bezahlt", "ueberfaellig", "storniert"] as const;
 export type InvoiceStatus = (typeof INVOICE_STATUS)[number];
+
+export const ORDER_DOCUMENT_TYPEN = ["abnahmeprotokoll_signiert", "sonstiges"] as const;
+export type OrderDocumentTyp = (typeof ORDER_DOCUMENT_TYPEN)[number];
 
 export const STOCK_MOVEMENT_TYPEN = ["wareneingang", "verbrauch_installation", "korrektur", "ruecksendung"] as const;
 export type StockMovementTyp = (typeof STOCK_MOVEMENT_TYPEN)[number];

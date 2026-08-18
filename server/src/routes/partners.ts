@@ -15,6 +15,7 @@ const partnerSchema = z.object({
   telefon: z.string().optional(),
   email: z.string().email().optional().or(z.literal("")),
   preisProBohrung: z.number().nonnegative().optional(),
+  preisPro3Loch: z.number().nonnegative().optional(),
   lieferzeitTage: z.number().int().nonnegative().optional(),
   notiz: z.string().optional(),
 });
@@ -36,10 +37,15 @@ partnersRouter.post(
       res.status(400).json({ error: parsed.error.flatten() });
       return;
     }
-    const { preisProBohrung, email, ...rest } = parsed.data;
+    const { preisProBohrung, preisPro3Loch, email, ...rest } = parsed.data;
     const [partner] = await db
       .insert(partners)
-      .values({ ...rest, email: email || undefined, preisProBohrung: preisProBohrung?.toString() })
+      .values({
+        ...rest,
+        email: email || undefined,
+        preisProBohrung: preisProBohrung?.toString(),
+        preisPro3Loch: preisPro3Loch?.toString(),
+      })
       .returning();
     res.status(201).json(partner);
   })
@@ -53,10 +59,15 @@ partnersRouter.patch(
       res.status(400).json({ error: parsed.error.flatten() });
       return;
     }
-    const { preisProBohrung, email, ...rest } = parsed.data;
+    const { preisProBohrung, preisPro3Loch, email, ...rest } = parsed.data;
     const [partner] = await db
       .update(partners)
-      .set({ ...rest, email: email || undefined, preisProBohrung: preisProBohrung?.toString() })
+      .set({
+        ...rest,
+        email: email || undefined,
+        preisProBohrung: preisProBohrung?.toString(),
+        preisPro3Loch: preisPro3Loch?.toString(),
+      })
       .where(eq(partners.id, Number(req.params.id)))
       .returning();
     if (!partner) {
