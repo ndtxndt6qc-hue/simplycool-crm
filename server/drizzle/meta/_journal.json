@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1786949293095,
+      "tag": "0000_blushing_jetstream",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1786950266022,
+      "tag": "0001_dapper_chamber",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786950917417,
+      "tag": "0002_square_havok",
+      "breakpoints": true
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "name": "@klimainstall/server",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx src/db/migrate.ts",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@klimainstall/shared": "*",
+    "bcrypt": "^6.0.0",
+    "connect-pg-simple": "^10.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.44.7",
+    "express": "^4.21.1",
+    "express-session": "^1.18.1",
+    "multer": "^2.0.0",
+    "nodemailer": "^9.0.5",
+    "pdfkit": "^0.15.1",
+    "pg": "^8.13.1",
+    "puppeteer": "^25.7.0",
+    "svg-to-pdfkit": "^0.1.8",
+    "swissqrbill": "^4.4.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/connect-pg-simple": "^7.0.3",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/express-session": "^1.18.0",
+    "@types/multer": "^1.4.13",
+    "@types/node": "^22.10.2",
+    "@types/nodemailer": "^6.4.17",
+    "@types/pdfkit": "^0.13.9",
+    "@types/svg-to-pdfkit": "^0.1.4",
+    "drizzle-kit": "^0.31.10",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
