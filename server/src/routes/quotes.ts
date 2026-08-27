@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { eq, inArray, sql } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { customers, devices, leads, properties, quoteItems, quotes } from "../db/schema.js";
+import { customers, devices, invoices, leads, orders, properties, quoteItems, quotes } from "../db/schema.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { QUOTE_ITEM_TYPEN, QUOTE_STATUS } from "@klimainstall/shared";
 import { getOrCreateSettings } from "../services/settings.js";
@@ -34,6 +34,19 @@ const quoteItemSchema = z.object({
   einkaufspreisIntern: z.number().default(0),
 });
 
+async function isQuoteLocked(quote: { status: string }) {
+  if (quote.status === "angenommen") return true;
+  const settings = await getOrCreateSettings();
+  return settings.angebotSperreNachVersand && quote.status !== "entwurf";
+}
+
+async function requireEditableQuote(quoteId: number) {
+  const [quote] = await db.select().from(quotes).where(eq(quotes.id, quoteId));
+  if (!quote) return { quote: null, locked: false };
+  const locked = await isQuoteLocked(quote);
+  return { quote, locked };
+}
+
 async function getQuoteTotals(quoteId: number) {
   const items = await db
     .select()
@@ -62,10 +75,26 @@ quotesRouter.get(
       .innerJoin(properties, eq(quotes.propertyId, properties.id))
       .orderBy(sql`${quotes.createdAt} desc`);
 
+    const orderRows = await db
+      .select({ id: orders.id, quoteId: orders.quoteId })
+      .from(orders)
+      .where(inArray(orders.quoteId, rows.map((r) => r.quote.id)));
+    const orderIdByQuoteId = new Map(orderRows.map((o) => [o.quoteId, o.id]));
+    const orderIds = orderRows.map((o) => o.id);
+    const invoiceRows = orderIds.length
+      ? await db
+          .select({ orderId: invoices.orderId, rechnungsnummer: invoices.rechnungsnummer })
+          .from(invoices)
+          .where(inArray(invoices.orderId, orderIds))
+      : [];
+    const rechnungsnummerByOrderId = new Map(invoiceRows.map((i) => [i.orderId, i.rechnungsnummer]));
+
     const withTotals = await Promise.all(
       rows.map(async ({ quote, customer, property }) => {
         const { summe } = await getQuoteTotals(quote.id);
-        return { ...quote, customer, property, summe };
+        const orderId = orderIdByQuoteId.get(quote.id);
+        const rechnungsnummer = orderId !== undefined ? rechnungsnummerByOrderId.get(orderId) ?? null : null;
+        return { ...quote, customer, property, summe, rechnungsnummer };
       })
     );
 
@@ -90,7 +119,8 @@ quotesRouter.get(
     }
 
     const { items, summe, deckungsbeitrag } = await getQuoteTotals(quoteId);
-    res.json({ ...row.quote, customer: row.customer, property: row.property, items, summe, deckungsbeitrag });
+    const locked = await isQuoteLocked(row.quote);
+    res.json({ ...row.quote, customer: row.customer, property: row.property, items, summe, deckungsbeitrag, locked });
   })
 );
 
@@ -138,11 +168,28 @@ quotesRouter.patch(
       res.status(400).json({ error: parsed.error.flatten() });
       return;
     }
-    const { mwstSatz, ...rest } = parsed.data;
+    const { mwstSatz, gueltigBis, ...rest } = parsed.data;
+    const quoteId = Number(req.params.id);
+    if (mwstSatz !== undefined || gueltigBis !== undefined) {
+      const { quote: existing, locked } = await requireEditableQuote(quoteId);
+      if (!existing) {
+        res.status(404).json({ error: "Angebot nicht gefunden." });
+        return;
+      }
+      if (locked) {
+        res.status(423).json({ error: "Angebot ist gesperrt und kann nicht mehr bearbeitet werden." });
+        return;
+      }
+    }
     const [quote] = await db
       .update(quotes)
-      .set({ ...rest, ...(mwstSatz !== undefined ? { mwstSatz: mwstSatz.toString() } : {}), updatedAt: new Date() })
-      .where(eq(quotes.id, Number(req.params.id)))
+      .set({
+        ...rest,
+        ...(gueltigBis !== undefined ? { gueltigBis } : {}),
+        ...(mwstSatz !== undefined ? { mwstSatz: mwstSatz.toString() } : {}),
+        updatedAt: new Date(),
+      })
+      .where(eq(quotes.id, quoteId))
       .returning();
     if (!quote) {
       res.status(404).json({ error: "Angebot nicht gefunden." });
@@ -176,6 +223,15 @@ quotesRouter.post(
       res.status(400).json({ error: parsed.error.flatten() });
       return;
     }
+    const { quote, locked } = await requireEditableQuote(Number(req.params.id));
+    if (!quote) {
+      res.status(404).json({ error: "Angebot nicht gefunden." });
+      return;
+    }
+    if (locked) {
+      res.status(423).json({ error: "Angebot ist gesperrt und kann nicht mehr bearbeitet werden." });
+      return;
+    }
     const [maxRow] = await db
       .select({ maxSort: sql<number>`coalesce(max(${quoteItems.sortOrder}), -1)` })
       .from(quoteItems)
@@ -204,6 +260,15 @@ quotesRouter.patch(
     const parsed = quoteItemSchema.partial().safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: parsed.error.flatten() });
+      return;
+    }
+    const { quote, locked } = await requireEditableQuote(Number(req.params.id));
+    if (!quote) {
+      res.status(404).json({ error: "Angebot nicht gefunden." });
+      return;
+    }
+    if (locked) {
+      res.status(423).json({ error: "Angebot ist gesperrt und kann nicht mehr bearbeitet werden." });
       return;
     }
     const { einzelpreis, einkaufspreisIntern, menge, ...rest } = parsed.data;
@@ -235,6 +300,15 @@ quotesRouter.post(
     }
     const quoteId = Number(req.params.id);
     const itemId = Number(req.params.itemId);
+    const { quote, locked } = await requireEditableQuote(quoteId);
+    if (!quote) {
+      res.status(404).json({ error: "Angebot nicht gefunden." });
+      return;
+    }
+    if (locked) {
+      res.status(423).json({ error: "Angebot ist gesperrt und kann nicht mehr bearbeitet werden." });
+      return;
+    }
     const items = await db
       .select()
       .from(quoteItems)
@@ -261,6 +335,15 @@ quotesRouter.post(
 quotesRouter.delete(
   "/:id/items/:itemId",
   asyncHandler(async (req, res) => {
+    const { quote, locked } = await requireEditableQuote(Number(req.params.id));
+    if (!quote) {
+      res.status(404).json({ error: "Angebot nicht gefunden." });
+      return;
+    }
+    if (locked) {
+      res.status(423).json({ error: "Angebot ist gesperrt und kann nicht mehr bearbeitet werden." });
+      return;
+    }
     await db.delete(quoteItems).where(eq(quoteItems.id, Number(req.params.itemId)));
     res.status(204).send();
   })

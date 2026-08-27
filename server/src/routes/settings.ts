@@ -12,6 +12,11 @@ import { getOrCreateSettings } from "../services/settings.js";
 
 export const settingsRouter = Router();
 
+function isValidSwissIban(value: string): boolean {
+  const cleaned = value.replace(/\s/g, "").toUpperCase();
+  return /^(CH|LI)\d{19}$/.test(cleaned);
+}
+
 const settingsSchema = z.object({
   firmenname: z.string().optional(),
   strasse: z.string().optional(),
@@ -27,6 +32,7 @@ const settingsSchema = z.object({
   smtpUser: z.string().optional(),
   smtpPassEncrypted: z.string().optional(),
   garantieZeit: z.string().optional(),
+  angebotSperreNachVersand: z.boolean().optional(),
 });
 
 settingsRouter.get(
@@ -44,6 +50,18 @@ settingsRouter.patch(
     const parsed = settingsSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: parsed.error.flatten() });
+      return;
+    }
+    if (parsed.data.iban && !isValidSwissIban(parsed.data.iban)) {
+      res
+        .status(400)
+        .json({ error: "IBAN ist ungültig. Format: CH oder LI gefolgt von 2 Prüfziffern und 17 Ziffern (21 Zeichen total)." });
+      return;
+    }
+    if (parsed.data.qrIban && !isValidSwissIban(parsed.data.qrIban)) {
+      res
+        .status(400)
+        .json({ error: "QR-IBAN ist ungültig. Format: CH oder LI gefolgt von 2 Prüfziffern und 17 Ziffern (21 Zeichen total)." });
       return;
     }
     const current = await getOrCreateSettings();

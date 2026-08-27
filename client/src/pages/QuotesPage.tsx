@@ -42,6 +42,7 @@ export function QuotesPage() {
                 <th>Status</th>
                 <th>Datum</th>
                 <th>Total</th>
+                <th>Rechnungsnr.</th>
               </tr>
             </thead>
             <tbody>
@@ -62,6 +63,13 @@ export function QuotesPage() {
                   </td>
                   <td>{new Date(q.datum).toLocaleDateString("de-CH")}</td>
                   <td>{formatChf(q.summe)}</td>
+                  <td>
+                    {q.rechnungsnummer ? (
+                      <span className="table-link">{q.rechnungsnummer}</span>
+                    ) : (
+                      <span style={{ color: "var(--color-text-muted)" }}>—</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

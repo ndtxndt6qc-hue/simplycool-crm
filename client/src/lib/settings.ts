@@ -18,6 +18,7 @@ export type Settings = {
   smtpUser: string | null;
   smtpPassSet: boolean;
   garantieZeit: string | null;
+  angebotSperreNachVersand: boolean;
   abnahmeprotokollVorlagePfad: string | null;
   installationsanweisungVorlagePfad: string | null;
 };
@@ -37,6 +38,7 @@ export type SettingsInput = Partial<{
   smtpUser: string;
   smtpPassEncrypted: string;
   garantieZeit: string;
+  angebotSperreNachVersand: boolean;
 }>;
 
 export function useSettings() {

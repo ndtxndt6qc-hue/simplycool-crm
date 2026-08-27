@@ -156,8 +156,23 @@ export async function renderInvoicePdf(data: InvoiceData): Promise<Buffer> {
       message: invoice.rechnungsnummer,
     };
 
-    const qrBill = new SwissQRBill(qrData, { language: "DE" });
-    qrBill.attachTo(doc);
+    try {
+      const qrBill = new SwissQRBill(qrData, { language: "DE" });
+      qrBill.attachTo(doc);
+    } catch (err) {
+      console.error("QR-Rechnung konnte nicht erstellt werden:", err);
+      y += 24;
+      doc
+        .font("Helvetica")
+        .fontSize(9)
+        .fillColor("#dc2626")
+        .text(
+          "Zahlungsteil (QR-Rechnung) konnte nicht erstellt werden — bitte IBAN in den Einstellungen prüfen.",
+          40,
+          y,
+          { width: 460 }
+        );
+    }
   }
 
   doc.end();

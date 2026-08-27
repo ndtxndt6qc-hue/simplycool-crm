@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { KUNDEN_TYP_LABELS } from "../lib/labels";
-import { useCustomer } from "../lib/customers";
+import { KUNDEN_TYP_LABELS, ORDER_STATUS_LABELS, QUOTE_STATUS_LABELS, INVOICE_STATUS_LABELS } from "../lib/labels";
+import { useCustomer, useCustomerHistory } from "../lib/customers";
 import { useProperties, type Property } from "../lib/properties";
 import { CustomerFormModal } from "../components/CustomerFormModal";
 import { PropertyFormModal } from "../components/PropertyFormModal";
@@ -12,6 +12,7 @@ export function CustomerDetailPage() {
   const customerId = Number(id);
   const { data: customer, isLoading } = useCustomer(customerId);
   const { data: properties } = useProperties(customerId);
+  const { data: history } = useCustomerHistory(customerId);
   const [editingCustomer, setEditingCustomer] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null | undefined>(undefined);
 
@@ -87,6 +88,112 @@ export function CustomerDetailPage() {
           </div>
         ))
       )}
+
+      <div className="section-header">
+        <h2>Historie</h2>
+      </div>
+
+      <div className="card">
+        <h3 style={{ marginBottom: 12 }}>Angebote</h3>
+        {!history?.quotes.length ? (
+          <p style={{ color: "var(--color-text-muted)", margin: 0 }}>Noch keine Angebote.</p>
+        ) : (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Nr.</th>
+                <th>Datum</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {history.quotes.map((q) => (
+                <tr key={q.id}>
+                  <td>
+                    <Link to={`/angebote/${q.id}`} className="table-link">
+                      {q.angebotsnummer}
+                    </Link>
+                  </td>
+                  <td>{new Date(q.datum).toLocaleDateString("de-CH")}</td>
+                  <td>
+                    <span className="badge badge-neutral">{QUOTE_STATUS_LABELS[q.status]}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <div className="card" style={{ marginTop: 16 }}>
+        <h3 style={{ marginBottom: 12 }}>Aufträge</h3>
+        {!history?.orders.length ? (
+          <p style={{ color: "var(--color-text-muted)", margin: 0 }}>Noch keine Aufträge.</p>
+        ) : (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Nr.</th>
+                <th>Installationstermin</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {history.orders.map((o) => (
+                <tr key={o.id}>
+                  <td>
+                    <Link to={`/auftraege/${o.id}`} className="table-link">
+                      {o.auftragsnummer}
+                    </Link>
+                  </td>
+                  <td>
+                    {o.installationTermin
+                      ? new Date(o.installationTermin).toLocaleDateString("de-CH")
+                      : "—"}
+                  </td>
+                  <td>
+                    <span className="badge badge-neutral">{ORDER_STATUS_LABELS[o.status]}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <div className="card" style={{ marginTop: 16 }}>
+        <h3 style={{ marginBottom: 12 }}>Rechnungen</h3>
+        {!history?.invoices.length ? (
+          <p style={{ color: "var(--color-text-muted)", margin: 0 }}>Noch keine Rechnungen.</p>
+        ) : (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Nr.</th>
+                <th>Datum</th>
+                <th>Fällig</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {history.invoices.map((i) => (
+                <tr key={i.id}>
+                  <td>
+                    <Link to={`/rechnungen/${i.id}`} className="table-link">
+                      {i.rechnungsnummer}
+                    </Link>
+                  </td>
+                  <td>{new Date(i.datum).toLocaleDateString("de-CH")}</td>
+                  <td>{new Date(i.faelligkeitsdatum).toLocaleDateString("de-CH")}</td>
+                  <td>
+                    <span className="badge badge-neutral">{INVOICE_STATUS_LABELS[i.status]}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
 
       {editingCustomer && <CustomerFormModal customer={customer} onClose={() => setEditingCustomer(false)} />}
       {editingProperty !== undefined && (

@@ -31,8 +31,20 @@ export type Quote = {
   updatedAt: string;
 };
 
-export type QuoteListEntry = Quote & { customer: Customer; property: Property; summe: number };
-export type QuoteDetail = Quote & { customer: Customer; property: Property; items: QuoteItem[]; summe: number; deckungsbeitrag: number };
+export type QuoteListEntry = Quote & {
+  customer: Customer;
+  property: Property;
+  summe: number;
+  rechnungsnummer: string | null;
+};
+export type QuoteDetail = Quote & {
+  customer: Customer;
+  property: Property;
+  items: QuoteItem[];
+  summe: number;
+  deckungsbeitrag: number;
+  locked: boolean;
+};
 
 export type QuoteItemInput = {
   typ: QuoteItemTyp;

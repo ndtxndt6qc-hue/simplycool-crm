@@ -1,6 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 import type { KundenTyp } from "@klimainstall/shared";
+import type { Quote } from "./quotes";
+import type { Order } from "./orders";
+import type { Invoice } from "./invoices";
 
 export type Customer = {
   id: number;
@@ -42,6 +45,20 @@ export function useCustomer(id: number | undefined) {
   return useQuery({
     queryKey: ["customers", id],
     queryFn: () => api.get<Customer>(`/customers/${id}`),
+    enabled: id !== undefined,
+  });
+}
+
+export type CustomerHistory = {
+  quotes: Quote[];
+  orders: Order[];
+  invoices: Invoice[];
+};
+
+export function useCustomerHistory(id: number | undefined) {
+  return useQuery({
+    queryKey: ["customers", id, "history"],
+    queryFn: () => api.get<CustomerHistory>(`/customers/${id}/history`),
     enabled: id !== undefined,
   });
 }

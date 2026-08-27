@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useSettings, useUpdateSettings, useUploadLogo, useUploadVorlage } from "../lib/settings";
 import { UsersSection } from "../components/UsersSection";
+import { ApiError } from "../lib/api";
 
 export function SettingsPage() {
   const { data: settings, isLoading } = useSettings();
@@ -23,7 +24,9 @@ export function SettingsPage() {
   const [smtpUser, setSmtpUser] = useState("");
   const [smtpPass, setSmtpPass] = useState("");
   const [garantieZeit, setGarantieZeit] = useState("");
+  const [angebotSperreNachVersand, setAngebotSperreNachVersand] = useState(true);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!settings) return;
@@ -40,29 +43,36 @@ export function SettingsPage() {
     setSmtpPort(settings.smtpPort ? String(settings.smtpPort) : "587");
     setSmtpUser(settings.smtpUser ?? "");
     setGarantieZeit(settings.garantieZeit ?? "");
+    setAngebotSperreNachVersand(settings.angebotSperreNachVersand ?? true);
   }, [settings]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setSaved(false);
-    await updateSettings.mutateAsync({
-      firmenname,
-      strasse,
-      plz,
-      ort,
-      iban,
-      qrIban,
-      mwstNummer,
-      defaultMwstSatz: Number(defaultMwstSatz),
-      stundensatz: Number(stundensatz),
-      smtpHost,
-      smtpPort: smtpPort ? Number(smtpPort) : undefined,
-      smtpUser,
-      garantieZeit,
-      ...(smtpPass ? { smtpPassEncrypted: smtpPass } : {}),
-    });
-    setSmtpPass("");
-    setSaved(true);
+    setError(null);
+    try {
+      await updateSettings.mutateAsync({
+        firmenname,
+        strasse,
+        plz,
+        ort,
+        iban,
+        qrIban,
+        mwstNummer,
+        defaultMwstSatz: Number(defaultMwstSatz),
+        stundensatz: Number(stundensatz),
+        smtpHost,
+        smtpPort: smtpPort ? Number(smtpPort) : undefined,
+        smtpUser,
+        garantieZeit,
+        angebotSperreNachVersand,
+        ...(smtpPass ? { smtpPassEncrypted: smtpPass } : {}),
+      });
+      setSmtpPass("");
+      setSaved(true);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Speichern fehlgeschlagen.");
+    }
   }
 
   async function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -118,6 +128,9 @@ export function SettingsPage() {
           <div className="field">
             <label htmlFor="s-iban">IBAN</label>
             <input id="s-iban" value={iban} onChange={(e) => setIban(e.target.value)} placeholder="CH00 0000 0000 0000 0000 0" />
+            <p style={{ fontSize: 11, color: "var(--color-text-muted)", margin: "4px 0 0" }}>
+              Schweizer IBAN, 21 Zeichen (CH + 2 Prüfziffern + 17 Ziffern).
+            </p>
           </div>
           <div className="field">
             <label htmlFor="s-qr-iban">QR-IBAN (falls abweichend)</label>
@@ -141,6 +154,24 @@ export function SettingsPage() {
             <label htmlFor="s-garantie">Garantiezeit (z.B. "24 Monate")</label>
             <input id="s-garantie" value={garantieZeit} onChange={(e) => setGarantieZeit(e.target.value)} />
           </div>
+        </div>
+
+        <div className="card">
+          <h3 style={{ marginBottom: 16 }}>Angebote</h3>
+          <div className="field" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <input
+              id="s-angebot-sperre"
+              type="checkbox"
+              checked={angebotSperreNachVersand}
+              onChange={(e) => setAngebotSperreNachVersand(e.target.checked)}
+            />
+            <label htmlFor="s-angebot-sperre" style={{ margin: 0 }}>
+              Angebot nach Versand automatisch sperren (nicht mehr bearbeitbar)
+            </label>
+          </div>
+          <p style={{ fontSize: 11, color: "var(--color-text-muted)", margin: "6px 0 0" }}>
+            Nach Annahme durch den Kunden ist ein Angebot immer gesperrt, unabhängig von dieser Einstellung.
+          </p>
         </div>
 
         <div className="card">
@@ -207,6 +238,7 @@ export function SettingsPage() {
           </div>
         </div>
 
+        {error && <p className="error-text">{error}</p>}
         {saved && <p style={{ color: "var(--color-success)" }}>Gespeichert.</p>}
         <button type="submit" className="btn btn-primary" disabled={updateSettings.isPending} style={{ alignSelf: "flex-start" }}>
           {updateSettings.isPending ? "Speichern…" : "Speichern"}

@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { z } from "zod";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { customers, leads } from "../db/schema.js";
+import { customers, invoices, leads, orders, quotes } from "../db/schema.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { KUNDEN_TYPEN } from "@klimainstall/shared";
 
@@ -39,6 +39,28 @@ customersRouter.get(
       return;
     }
     res.json(customer);
+  })
+);
+
+customersRouter.get(
+  "/:id/history",
+  asyncHandler(async (req, res) => {
+    const customerId = Number(req.params.id);
+    const customerQuotes = await db
+      .select()
+      .from(quotes)
+      .where(eq(quotes.customerId, customerId))
+      .orderBy(quotes.datum);
+    const customerOrders = await db
+      .select()
+      .from(orders)
+      .where(eq(orders.customerId, customerId))
+      .orderBy(orders.createdAt);
+    const orderIds = customerOrders.map((o) => o.id);
+    const customerInvoices = orderIds.length
+      ? await db.select().from(invoices).where(inArray(invoices.orderId, orderIds)).orderBy(invoices.datum)
+      : [];
+    res.json({ quotes: customerQuotes, orders: customerOrders, invoices: customerInvoices });
   })
 );
 

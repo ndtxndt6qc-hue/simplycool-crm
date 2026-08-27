@@ -8,11 +8,13 @@ export function QuoteItemRow({
   item,
   isFirst,
   isLast,
+  locked,
 }: {
   quoteId: number;
   item: QuoteItem;
   isFirst: boolean;
   isLast: boolean;
+  locked: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [beschreibung, setBeschreibung] = useState(item.beschreibung);
@@ -105,37 +107,41 @@ export function QuoteItemRow({
       <td>{formatChf(total)}</td>
       <td style={{ color: db >= 0 ? "var(--color-success)" : "var(--color-danger)" }}>{formatChf(db)}</td>
       <td>
-        <div style={{ display: "flex", gap: 4 }}>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => moveItem.mutate({ itemId: item.id, direction: "up" })}
-            disabled={isFirst || moveItem.isPending}
-            aria-label="Nach oben"
-          >
-            ↑
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => moveItem.mutate({ itemId: item.id, direction: "down" })}
-            disabled={isLast || moveItem.isPending}
-            aria-label="Nach unten"
-          >
-            ↓
-          </button>
-          <button type="button" className="btn btn-secondary" onClick={() => setEditing(true)} aria-label="Bearbeiten">
-            ✎
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => deleteQuoteItemWithConfirm(item.beschreibung, () => deleteItem.mutate(item.id))}
-            aria-label="Position löschen"
-          >
-            ×
-          </button>
-        </div>
+        {locked ? (
+          <span style={{ color: "var(--color-text-muted)", fontSize: 12 }}>gesperrt</span>
+        ) : (
+          <div style={{ display: "flex", gap: 4 }}>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => moveItem.mutate({ itemId: item.id, direction: "up" })}
+              disabled={isFirst || moveItem.isPending}
+              aria-label="Nach oben"
+            >
+              ↑
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => moveItem.mutate({ itemId: item.id, direction: "down" })}
+              disabled={isLast || moveItem.isPending}
+              aria-label="Nach unten"
+            >
+              ↓
+            </button>
+            <button type="button" className="btn btn-secondary" onClick={() => setEditing(true)} aria-label="Bearbeiten">
+              ✎
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => deleteQuoteItemWithConfirm(item.beschreibung, () => deleteItem.mutate(item.id))}
+              aria-label="Position löschen"
+            >
+              ×
+            </button>
+          </div>
+        )}
       </td>
     </tr>
   );

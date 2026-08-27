@@ -281,6 +281,7 @@ export const settings = pgTable("settings", {
   defaultMwstSatz: numeric("default_mwst_satz", { precision: 4, scale: 2 }).notNull().default("8.10"),
   stundensatz: numeric("stundensatz", { precision: 10, scale: 2 }).notNull().default("0"),
   garantieZeit: varchar("garantie_zeit", { length: 100 }),
+  angebotSperreNachVersand: boolean("angebot_sperre_nach_versand").notNull().default(true),
   abnahmeprotokollVorlagePfad: text("abnahmeprotokoll_vorlage_pfad"),
   installationsanweisungVorlagePfad: text("installationsanweisung_vorlage_pfad"),
   smtpHost: varchar("smtp_host", { length: 255 }),

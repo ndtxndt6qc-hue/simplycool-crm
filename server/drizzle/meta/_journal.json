@@ -29,6 +29,13 @@
       "when": 1787064039752,
       "tag": "0003_hard_rawhide_kid",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1787821131969,
+      "tag": "0004_large_millenium_guard",
+      "breakpoints": true
     }
   ]
 }

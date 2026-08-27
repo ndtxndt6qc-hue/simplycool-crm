@@ -51,6 +51,15 @@ export function QuoteDetailPage() {
         ← Zurück zu Angeboten
       </Link>
 
+      {quote.locked && (
+        <div className="card" style={{ marginBottom: 20, background: "#fefce8", borderColor: "#fde68a" }}>
+          <strong>Angebot ist gesperrt.</strong>{" "}
+          {quote.status === "angenommen"
+            ? "Nach Annahme durch den Kunden können Positionen nicht mehr bearbeitet werden."
+            : "Positionen können nach dem Versand nicht mehr bearbeitet werden. Diese Sperre kann in den Einstellungen deaktiviert werden."}
+        </div>
+      )}
+
       {quote.status === "angenommen" && (
         <div className="card" style={{ marginBottom: 20, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           {existingOrder ? (
@@ -126,6 +135,7 @@ export function QuoteDetailPage() {
                 item={item}
                 isFirst={idx === 0}
                 isLast={idx === quote.items.length - 1}
+                locked={quote.locked}
               />
             ))}
             {!quote.items.length && (
@@ -139,7 +149,7 @@ export function QuoteDetailPage() {
         </table>
       </div>
 
-      <QuoteItemForm quoteId={quote.id} />
+      {!quote.locked && <QuoteItemForm quoteId={quote.id} />}
 
       <div style={{ display: "flex", gap: 24, marginTop: 24 }}>
         <div className="card" style={{ width: 280 }}>

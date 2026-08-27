@@ -1,0 +1,1 @@
+ALTER TABLE "settings" ADD COLUMN "angebot_sperre_nach_versand" boolean DEFAULT true NOT NULL;
