@@ -14,6 +14,7 @@ import { OrderDetailPage } from "./pages/OrderDetailPage";
 import { InvoicesPage } from "./pages/InvoicesPage";
 import { InvoiceDetailPage } from "./pages/InvoiceDetailPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { GemeindeAnforderungenPage } from "./pages/GemeindeAnforderungenPage";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -52,6 +53,7 @@ export default function App() {
         <Route path="auftraege/:id" element={<OrderDetailPage />} />
         <Route path="rechnungen" element={<InvoicesPage />} />
         <Route path="rechnungen/:id" element={<InvoiceDetailPage />} />
+        <Route path="gemeinde-anforderungen" element={<GemeindeAnforderungenPage />} />
         <Route path="einstellungen" element={<SettingsPage />} />
       </Route>
       <Route

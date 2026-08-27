@@ -17,6 +17,7 @@ const ITEM_TYP_LABELS: Record<string, string> = {
   montage: "Montage/Arbeitszeit",
   fahrt_material: "Fahrt/Kleinmaterial",
   sonderposition: "Sonderposition",
+  gemeindeabklaerung: "Gemeinde-Abklärung",
 };
 
 function chf(value: number) {
@@ -50,6 +51,7 @@ function logoDataUri(logoPfad: string | null): string | null {
 const TECHNIKER_ICON_SVG = `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#475569" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="3.2"/><path d="M5 21c0-4 3.1-7 7-7s7 3 7 7"/></svg>`;
 const MATERIAL_ICON_SVG = `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#475569" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l1.5-4.5A2 2 0 0 1 6.4 7h11.2a2 2 0 0 1 1.9 1.5L21 13"/><rect x="2.5" y="13" width="19" height="5" rx="1"/><circle cx="7" cy="18.5" r="1.5"/><circle cx="17" cy="18.5" r="1.5"/></svg>`;
 const KERNBOHRUNG_ICON_SVG = `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#475569" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.2"/></svg>`;
+const GEMEINDE_ICON_SVG = `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#475569" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V9l8-5 8 5v12"/><path d="M9 21v-6h6v6"/></svg>`;
 
 function itemImageHtml(item: InferSelectModel<typeof quoteItems> & { deviceBildPfad?: string | null }): string {
   if (item.typ === "geraet") {
@@ -59,6 +61,7 @@ function itemImageHtml(item: InferSelectModel<typeof quoteItems> & { deviceBildP
   if (item.typ === "montage") return TECHNIKER_ICON_SVG;
   if (item.typ === "fahrt_material") return MATERIAL_ICON_SVG;
   if (item.typ === "kernbohrung") return KERNBOHRUNG_ICON_SVG;
+  if (item.typ === "gemeindeabklaerung") return GEMEINDE_ICON_SVG;
   return "";
 }
 

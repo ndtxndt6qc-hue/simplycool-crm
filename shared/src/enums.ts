@@ -20,7 +20,14 @@ export type PartnerTyp = (typeof PARTNER_TYPEN)[number];
 export const QUOTE_STATUS = ["entwurf", "versendet", "angenommen", "abgelehnt", "abgelaufen"] as const;
 export type QuoteStatus = (typeof QUOTE_STATUS)[number];
 
-export const QUOTE_ITEM_TYPEN = ["geraet", "kernbohrung", "montage", "fahrt_material", "sonderposition"] as const;
+export const QUOTE_ITEM_TYPEN = [
+  "geraet",
+  "kernbohrung",
+  "montage",
+  "fahrt_material",
+  "sonderposition",
+  "gemeindeabklaerung",
+] as const;
 export type QuoteItemTyp = (typeof QUOTE_ITEM_TYPEN)[number];
 
 export const ORDER_STATUS = ["offen", "in_planung", "installation_durchgefuehrt", "abgeschlossen", "storniert"] as const;
@@ -50,3 +57,11 @@ export type StockMovementTyp = (typeof STOCK_MOVEMENT_TYPEN)[number];
 
 export const MAHNSTUFEN = [1, 2] as const;
 export type Mahnstufe = (typeof MAHNSTUFEN)[number];
+
+export const GEMEINDE_ANFORDERUNGSTYPEN = [
+  "keine",
+  "meldepflicht",
+  "baubewilligungspflicht",
+  "unklar_abklaeren",
+] as const;
+export type GemeindeAnforderungstyp = (typeof GEMEINDE_ANFORDERUNGSTYPEN)[number];

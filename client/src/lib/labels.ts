@@ -1,5 +1,6 @@
 import type {
   ChecklistPunkt,
+  GemeindeAnforderungstyp,
   InvoiceStatus,
   KundenTyp,
   LeadQuelle,
@@ -58,6 +59,14 @@ export const QUOTE_ITEM_TYP_LABELS: Record<QuoteItemTyp, string> = {
   montage: "Montage/Arbeitszeit",
   fahrt_material: "Fahrt/Kleinmaterial",
   sonderposition: "Sonderposition",
+  gemeindeabklaerung: "Gemeinde-Abklärung",
+};
+
+export const GEMEINDE_ANFORDERUNGSTYP_LABELS: Record<GemeindeAnforderungstyp, string> = {
+  keine: "Keine Anforderung",
+  meldepflicht: "Meldepflicht",
+  baubewilligungspflicht: "Baubewilligungspflicht",
+  unklar_abklaeren: "Unklar — abklären",
 };
 
 export const KUNDEN_TYP_LABELS: Record<KundenTyp, string> = {

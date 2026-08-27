@@ -7,6 +7,7 @@ import { useDeleteQuote, useQuote, useUpdateQuote } from "../lib/quotes";
 import { useCreateOrderFromQuote, useOrderByQuote } from "../lib/orders";
 import { QuoteItemForm } from "../components/QuoteItemForm";
 import { QuoteItemRow } from "../components/QuoteItemRow";
+import { QuoteGemeindeCard } from "../components/QuoteGemeindeCard";
 import { SendQuoteModal } from "../components/SendQuoteModal";
 import { ApiError } from "../lib/api";
 
@@ -113,6 +114,8 @@ export function QuoteDetailPage() {
           </button>
         </div>
       </div>
+
+      <QuoteGemeindeCard quoteId={quote.id} ort={quote.property.ort} locked={quote.locked} />
 
       <div className="card" style={{ padding: 0, overflowX: "auto" }}>
         <table className="data-table">

@@ -17,6 +17,7 @@ import { ordersRouter } from "./routes/orders.js";
 import { invoicesRouter } from "./routes/invoices.js";
 import { dashboardRouter } from "./routes/dashboard.js";
 import { usersRouter } from "./routes/users.js";
+import { gemeindeAnforderungenRouter } from "./routes/gemeindeAnforderungen.js";
 import { requireAuth } from "./middleware/requireAuth.js";
 
 const app = express();
@@ -65,10 +66,15 @@ app.use("/api/orders", ordersRouter);
 app.use("/api/invoices", invoicesRouter);
 app.use("/api/dashboard", dashboardRouter);
 app.use("/api/users", usersRouter);
+app.use("/api/gemeinde-anforderungen", gemeindeAnforderungenRouter);
 
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   if (typeof err === "object" && err !== null && "code" in err && err.code === "23503") {
     res.status(409).json({ error: "Löschen nicht möglich: Es bestehen noch abhängige Datensätze." });
+    return;
+  }
+  if (typeof err === "object" && err !== null && "code" in err && err.code === "23505") {
+    res.status(409).json({ error: "Eintrag existiert bereits (Kanton + Gemeinde muss eindeutig sein)." });
     return;
   }
   console.error(err);

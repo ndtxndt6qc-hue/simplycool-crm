@@ -148,7 +148,7 @@ export function QuoteItemForm({ quoteId }: { quoteId: number }) {
           </>
         )}
 
-        {(typ === "fahrt_material" || typ === "sonderposition") && (
+        {(typ === "fahrt_material" || typ === "sonderposition" || typ === "gemeindeabklaerung") && (
           <div className="field" style={{ flex: 1, minWidth: 200 }}>
             <label htmlFor="item-beschreibung">Beschreibung</label>
             <input

@@ -2,12 +2,23 @@ import { Router } from "express";
 import { z } from "zod";
 import { eq, inArray, sql } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { customers, devices, invoices, leads, orders, properties, quoteItems, quotes } from "../db/schema.js";
+import {
+  customers,
+  devices,
+  gemeindeAnforderungen,
+  invoices,
+  leads,
+  orders,
+  properties,
+  quoteItems,
+  quotes,
+} from "../db/schema.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { QUOTE_ITEM_TYPEN, QUOTE_STATUS } from "@klimainstall/shared";
 import { getOrCreateSettings } from "../services/settings.js";
 import { renderQuotePdf } from "../pdf/quotePdf.js";
 import { sendMail } from "../services/mailer.js";
+import { findGemeindeMatch } from "../services/gemeindeMatch.js";
 
 export const quotesRouter = Router();
 
@@ -121,6 +132,118 @@ quotesRouter.get(
     const { items, summe, deckungsbeitrag } = await getQuoteTotals(quoteId);
     const locked = await isQuoteLocked(row.quote);
     res.json({ ...row.quote, customer: row.customer, property: row.property, items, summe, deckungsbeitrag, locked });
+  })
+);
+
+quotesRouter.get(
+  "/:id/gemeinde",
+  asyncHandler(async (req, res) => {
+    const quoteId = Number(req.params.id);
+    const [row] = await db
+      .select({ quote: quotes, property: properties })
+      .from(quotes)
+      .innerJoin(properties, eq(quotes.propertyId, properties.id))
+      .where(eq(quotes.id, quoteId));
+    if (!row) {
+      res.status(404).json({ error: "Angebot nicht gefunden." });
+      return;
+    }
+
+    let gemeindeId = row.quote.gemeindeAnforderungId;
+    if (!gemeindeId) {
+      const candidates = await db
+        .select({ id: gemeindeAnforderungen.id, gemeindeName: gemeindeAnforderungen.gemeindeName })
+        .from(gemeindeAnforderungen);
+      const match = findGemeindeMatch(row.property.ort, candidates);
+      if (match) {
+        gemeindeId = match.id;
+        await db.update(quotes).set({ gemeindeAnforderungId: gemeindeId }).where(eq(quotes.id, quoteId));
+      }
+    }
+
+    const gemeinde = gemeindeId
+      ? (await db.select().from(gemeindeAnforderungen).where(eq(gemeindeAnforderungen.id, gemeindeId)))[0] ?? null
+      : null;
+
+    res.json({ ort: row.property.ort, gemeinde, vorgeschlagen: row.quote.gemeindeAbklaerungVorgeschlagen });
+  })
+);
+
+const quoteGemeindeSchema = z.object({ gemeindeAnforderungId: z.number().int().nullable() });
+
+quotesRouter.patch(
+  "/:id/gemeinde",
+  asyncHandler(async (req, res) => {
+    const parsed = quoteGemeindeSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.flatten() });
+      return;
+    }
+    const quoteId = Number(req.params.id);
+    const [quote] = await db
+      .update(quotes)
+      .set({
+        gemeindeAnforderungId: parsed.data.gemeindeAnforderungId,
+        gemeindeAbklaerungVorgeschlagen: false,
+        updatedAt: new Date(),
+      })
+      .where(eq(quotes.id, quoteId))
+      .returning();
+    if (!quote) {
+      res.status(404).json({ error: "Angebot nicht gefunden." });
+      return;
+    }
+    res.json(quote);
+  })
+);
+
+quotesRouter.post(
+  "/:id/gemeinde/apply-position",
+  asyncHandler(async (req, res) => {
+    const quoteId = Number(req.params.id);
+    const { quote, locked } = await requireEditableQuote(quoteId);
+    if (!quote) {
+      res.status(404).json({ error: "Angebot nicht gefunden." });
+      return;
+    }
+    if (locked) {
+      res.status(423).json({ error: "Angebot ist gesperrt und kann nicht mehr bearbeitet werden." });
+      return;
+    }
+    if (quote.gemeindeAbklaerungVorgeschlagen) {
+      res.status(200).json({ skipped: true });
+      return;
+    }
+    if (!quote.gemeindeAnforderungId) {
+      res.status(400).json({ error: "Keine Gemeinde zugeordnet." });
+      return;
+    }
+    const [gemeinde] = await db
+      .select()
+      .from(gemeindeAnforderungen)
+      .where(eq(gemeindeAnforderungen.id, quote.gemeindeAnforderungId));
+    if (!gemeinde || (gemeinde.anforderungstyp !== "meldepflicht" && gemeinde.anforderungstyp !== "baubewilligungspflicht")) {
+      res.status(400).json({ error: "Für diese Gemeinde ist keine Kostenposition vorgesehen." });
+      return;
+    }
+    const [maxRow] = await db
+      .select({ maxSort: sql<number>`coalesce(max(${quoteItems.sortOrder}), -1)` })
+      .from(quoteItems)
+      .where(eq(quoteItems.quoteId, quoteId));
+    const [item] = await db
+      .insert(quoteItems)
+      .values({
+        quoteId,
+        typ: "gemeindeabklaerung",
+        beschreibung: `Meldung/Baugesuch Gemeinde ${gemeinde.gemeindeName}`,
+        menge: "1",
+        einzelpreis: gemeinde.kostenPauschale ?? "0",
+        einkaufspreisIntern: "0",
+        sortOrder: Number(maxRow.maxSort) + 1,
+      })
+      .returning();
+    await db.update(quotes).set({ gemeindeAbklaerungVorgeschlagen: true, updatedAt: new Date() }).where(eq(quotes.id, quoteId));
+    res.status(201).json({ item });
   })
 );
 

@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { to: "/angebote", label: "Angebote" },
   { to: "/auftraege", label: "Aufträge" },
   { to: "/rechnungen", label: "Rechnungen" },
+  { to: "/gemeinde-anforderungen", label: "Gemeinde-Anforderungen" },
   { to: "/einstellungen", label: "Einstellungen" },
 ];
 

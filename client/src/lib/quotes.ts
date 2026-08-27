@@ -3,6 +3,7 @@ import { api } from "./api";
 import type { QuoteItemTyp, QuoteStatus } from "@klimainstall/shared";
 import type { Customer } from "./customers";
 import type { Property } from "./properties";
+import type { GemeindeAnforderung } from "./gemeindeAnforderungen";
 
 export type QuoteItem = {
   id: number;
@@ -141,6 +142,43 @@ export function useSendQuote(quoteId: number) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["quotes", quoteId] });
       qc.invalidateQueries({ queryKey: ["quotes"] });
+    },
+  });
+}
+
+export type QuoteGemeindeInfo = {
+  ort: string;
+  gemeinde: GemeindeAnforderung | null;
+  vorgeschlagen: boolean;
+};
+
+export function useQuoteGemeinde(quoteId: number | undefined) {
+  return useQuery({
+    queryKey: ["quotes", quoteId, "gemeinde"],
+    queryFn: () => api.get<QuoteGemeindeInfo>(`/quotes/${quoteId}/gemeinde`),
+    enabled: quoteId !== undefined,
+  });
+}
+
+export function useSetQuoteGemeinde(quoteId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (gemeindeAnforderungId: number | null) =>
+      api.patch<Quote>(`/quotes/${quoteId}/gemeinde`, { gemeindeAnforderungId }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["quotes", quoteId, "gemeinde"] });
+      qc.invalidateQueries({ queryKey: ["quotes", quoteId] });
+    },
+  });
+}
+
+export function useApplyGemeindePosition(quoteId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.post<{ item?: QuoteItem; skipped?: boolean }>(`/quotes/${quoteId}/gemeinde/apply-position`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["quotes", quoteId, "gemeinde"] });
+      qc.invalidateQueries({ queryKey: ["quotes", quoteId] });
     },
   });
 }

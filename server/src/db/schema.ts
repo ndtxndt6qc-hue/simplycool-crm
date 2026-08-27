@@ -9,6 +9,7 @@ import {
   timestamp,
   date,
   varchar,
+  unique,
 } from "drizzle-orm/pg-core";
 
 export const leadQuelleEnum = pgEnum("lead_quelle", ["telefon", "website", "empfehlung", "sonstige"]);
@@ -29,6 +30,7 @@ export const quoteItemTypEnum = pgEnum("quote_item_typ", [
   "montage",
   "fahrt_material",
   "sonderposition",
+  "gemeindeabklaerung",
 ]);
 export const orderStatusEnum = pgEnum("order_status", [
   "offen",
@@ -62,6 +64,12 @@ export const stockMovementTypEnum = pgEnum("stock_movement_typ", [
   "ruecksendung",
 ]);
 export const userRoleEnum = pgEnum("user_role", ["admin", "mitarbeiter"]);
+export const gemeindeAnforderungstypEnum = pgEnum("gemeinde_anforderungstyp", [
+  "keine",
+  "meldepflicht",
+  "baubewilligungspflicht",
+  "unklar_abklaeren",
+]);
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -170,6 +178,25 @@ export const stockMovements = pgTable("stock_movements", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const gemeindeAnforderungen = pgTable(
+  "gemeinde_anforderungen",
+  {
+    id: serial("id").primaryKey(),
+    kanton: varchar("kanton", { length: 2 }).notNull(),
+    gemeindeName: varchar("gemeinde_name", { length: 255 }).notNull(),
+    bfsNummer: integer("bfs_nummer"),
+    anforderungstyp: gemeindeAnforderungstypEnum("anforderungstyp").notNull().default("unklar_abklaeren"),
+    beschreibung: text("beschreibung"),
+    kostenPauschale: numeric("kosten_pauschale", { precision: 10, scale: 2 }),
+    bearbeitungsdauerTage: integer("bearbeitungsdauer_tage"),
+    quelle: text("quelle"),
+    zuletztGeprueftAm: date("zuletzt_geprueft_am"),
+    erstelltAm: timestamp("erstellt_am").notNull().defaultNow(),
+    aktualisiertAm: timestamp("aktualisiert_am").notNull().defaultNow(),
+  },
+  (table) => [unique().on(table.kanton, table.gemeindeName)]
+);
+
 export const quotes = pgTable("quotes", {
   id: serial("id").primaryKey(),
   angebotsnummer: varchar("angebotsnummer", { length: 50 }).notNull().unique(),
@@ -180,6 +207,10 @@ export const quotes = pgTable("quotes", {
   datum: date("datum").notNull().defaultNow(),
   gueltigBis: date("gueltig_bis"),
   mwstSatz: numeric("mwst_satz", { precision: 4, scale: 2 }).notNull().default("8.10"),
+  gemeindeAnforderungId: integer("gemeinde_anforderung_id").references(() => gemeindeAnforderungen.id, {
+    onDelete: "set null",
+  }),
+  gemeindeAbklaerungVorgeschlagen: boolean("gemeinde_abklaerung_vorgeschlagen").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
