@@ -1,0 +1,38 @@
+# Automatisches Deployment bei Push auf main.
+#
+# Strategie: das Docker-Image wird DIREKT AUF DEM SERVER gebaut (docker compose up --build),
+# nicht in der CI mit Push in eine Registry. Für ein einzelnes kleines Hetzner-VPS ist das
+# deutlich einfacher als eine Registry (GHCR o.ä.) einzurichten und zu pflegen. Der Server
+# braucht dafür genug RAM für den Vite-Build (CX22 mit 4 GB reicht erfahrungsgemäss).
+#
+# Nötige Repository-Secrets (GitHub -> Settings -> Secrets and variables -> Actions):
+#   DEPLOY_HOST      IP oder Hostname des Hetzner-Servers
+#   DEPLOY_USER      SSH-Benutzer auf dem Server (z.B. deploy)
+#   DEPLOY_SSH_KEY   Privater SSH-Key für diesen Benutzer (öffentlicher Teil liegt auf dem Server)
+#   DEPLOY_PATH      Absoluter Pfad des Projekts auf dem Server (z.B. /opt/simplycool-crm)
+#
+# Diese Datei ist vorbereitet, aber NICHT aktiv eingerichtet — erst nutzbar, sobald die
+# obigen Secrets gesetzt sind und der Server gemäss DEPLOYMENT.md vorbereitet ist.
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            cd "${{ secrets.DEPLOY_PATH }}"
+            git pull origin main
+            docker compose up -d --build
+            docker compose exec -T server npm run db:migrate

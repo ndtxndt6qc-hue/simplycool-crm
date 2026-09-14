@@ -13,7 +13,12 @@ type QuoteData = {
 
 export async function renderQuotePdf(data: QuoteData): Promise<Buffer> {
   const html = renderQuoteHtml(data);
-  const browser = await puppeteer.launch({ headless: true });
+  const browser = await puppeteer.launch({
+    headless: true,
+    // Nötig, damit Chromium als root startet (z.B. im Docker-Container ohne eigenen Nutzer);
+    // im Codespace/lokal (nicht-root) wirkt sich das nicht aus.
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  });
   try {
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "load" });
