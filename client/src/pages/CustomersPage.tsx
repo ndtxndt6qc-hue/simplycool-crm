@@ -38,7 +38,7 @@ export function CustomersPage() {
               {customers.map((c) => (
                 <tr key={c.id}>
                   <td>
-                    <Link to={`/kunden/${c.id}`} className="table-link">
+                    <Link to={`/app/kunden/${c.id}`} className="table-link">
                       {c.firma ? `${c.firma} — ` : ""}
                       {c.vorname ? `${c.vorname} ` : ""}
                       {c.nachname}

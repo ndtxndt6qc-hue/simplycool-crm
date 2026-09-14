@@ -18,6 +18,7 @@ import { invoicesRouter } from "./routes/invoices.js";
 import { dashboardRouter } from "./routes/dashboard.js";
 import { usersRouter } from "./routes/users.js";
 import { gemeindeAnforderungenRouter } from "./routes/gemeindeAnforderungen.js";
+import { publicRouter } from "./routes/public.js";
 import { requireAuth } from "./middleware/requireAuth.js";
 
 const app = express();
@@ -50,6 +51,8 @@ app.use("/api/auth", authRouter);
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true });
 });
+
+app.use("/api/public", publicRouter);
 
 app.use("/uploads", requireAuth, express.static(path.resolve(process.cwd(), "uploads")));
 

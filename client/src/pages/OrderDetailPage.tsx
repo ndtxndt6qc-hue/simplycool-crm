@@ -39,7 +39,7 @@ export function OrderDetailPage() {
     setInvoiceError(null);
     try {
       const invoice = await createInvoice.mutateAsync(orderId);
-      navigate(`/rechnungen/${invoice.id}`);
+      navigate(`/app/rechnungen/${invoice.id}`);
     } catch (err) {
       setInvoiceError(err instanceof ApiError ? err.message : "Rechnung konnte nicht erstellt werden.");
     }
@@ -61,7 +61,7 @@ export function OrderDetailPage() {
 
   return (
     <div>
-      <Link to="/auftraege" className="back-link">
+      <Link to="/app/auftraege" className="back-link">
         ← Zurück zu Aufträgen
       </Link>
 
@@ -72,7 +72,7 @@ export function OrderDetailPage() {
               <span>
                 Rechnung <strong>{existingInvoice.rechnungsnummer}</strong> wurde bereits erstellt.
               </span>
-              <Link className="btn btn-secondary" to={`/rechnungen/${existingInvoice.id}`}>
+              <Link className="btn btn-secondary" to={`/app/rechnungen/${existingInvoice.id}`}>
                 Zur Rechnung
               </Link>
             </>

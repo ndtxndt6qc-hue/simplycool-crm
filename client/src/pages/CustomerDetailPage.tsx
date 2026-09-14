@@ -22,7 +22,7 @@ export function CustomerDetailPage() {
 
   return (
     <div>
-      <Link to="/kunden" className="back-link">
+      <Link to="/app/kunden" className="back-link">
         ← Zurück zu Kunden
       </Link>
 
@@ -110,7 +110,7 @@ export function CustomerDetailPage() {
               {history.quotes.map((q) => (
                 <tr key={q.id}>
                   <td>
-                    <Link to={`/angebote/${q.id}`} className="table-link">
+                    <Link to={`/app/angebote/${q.id}`} className="table-link">
                       {q.angebotsnummer}
                     </Link>
                   </td>
@@ -142,7 +142,7 @@ export function CustomerDetailPage() {
               {history.orders.map((o) => (
                 <tr key={o.id}>
                   <td>
-                    <Link to={`/auftraege/${o.id}`} className="table-link">
+                    <Link to={`/app/auftraege/${o.id}`} className="table-link">
                       {o.auftragsnummer}
                     </Link>
                   </td>
@@ -179,7 +179,7 @@ export function CustomerDetailPage() {
               {history.invoices.map((i) => (
                 <tr key={i.id}>
                   <td>
-                    <Link to={`/rechnungen/${i.id}`} className="table-link">
+                    <Link to={`/app/rechnungen/${i.id}`} className="table-link">
                       {i.rechnungsnummer}
                     </Link>
                   </td>

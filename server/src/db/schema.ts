@@ -12,7 +12,15 @@ import {
   unique,
 } from "drizzle-orm/pg-core";
 
-export const leadQuelleEnum = pgEnum("lead_quelle", ["telefon", "website", "empfehlung", "sonstige"]);
+export const leadQuelleEnum = pgEnum("lead_quelle", [
+  "telefon",
+  "website",
+  "empfehlung",
+  "sonstige",
+  "google",
+  "facebook",
+  "flyer",
+]);
 export const leadStatusEnum = pgEnum("lead_status", [
   "neu",
   "termin_vereinbart",
@@ -58,6 +66,7 @@ export const invoiceStatusEnum = pgEnum("invoice_status", [
   "storniert",
 ]);
 export const orderDocumentTypEnum = pgEnum("order_document_typ", ["abnahmeprotokoll_signiert", "sonstiges"]);
+export const orderReferenzFotoTypEnum = pgEnum("order_referenz_foto_typ", ["vorher", "nachher"]);
 export const stockMovementTypEnum = pgEnum("stock_movement_typ", [
   "wareneingang",
   "verbrauch_installation",
@@ -242,6 +251,18 @@ export const orders = pgTable("orders", {
   installationTermin: timestamp("installation_termin"),
   bohrTermin: timestamp("bohr_termin"),
   bohrpartnerId: integer("bohrpartner_id").references(() => partners.id, { onDelete: "set null" }),
+  referenzFreigegeben: boolean("referenz_freigegeben").notNull().default(false),
+  referenzBeschreibung: text("referenz_beschreibung"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const orderReferenzFotos = pgTable("order_referenz_fotos", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id")
+    .notNull()
+    .references(() => orders.id, { onDelete: "cascade" }),
+  typ: orderReferenzFotoTypEnum("typ").notNull(),
+  dateipfad: text("dateipfad").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

@@ -79,7 +79,7 @@ export function CreateQuoteFromLeadModal({ lead, onClose }: { lead: Lead; onClos
 
       const quote = await createQuote.mutateAsync({ customerId: customerId!, propertyId, leadId: lead.id });
       onClose();
-      navigate(`/angebote/${quote.id}`);
+      navigate(`/app/angebote/${quote.id}`);
     } catch {
       setError("Erstellen fehlgeschlagen.");
     }

@@ -45,7 +45,7 @@ export function InvoicesPage() {
               {invoices.map((inv) => (
                 <tr key={inv.id}>
                   <td>
-                    <Link to={`/rechnungen/${inv.id}`} className="table-link">
+                    <Link to={`/app/rechnungen/${inv.id}`} className="table-link">
                       {inv.rechnungsnummer}
                     </Link>
                   </td>

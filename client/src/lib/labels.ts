@@ -116,4 +116,7 @@ export const LEAD_QUELLE_LABELS: Record<LeadQuelle, string> = {
   website: "Website",
   empfehlung: "Empfehlung",
   sonstige: "Sonstige",
+  google: "Google Ads",
+  facebook: "Facebook",
+  flyer: "Flyer",
 };

@@ -27,7 +27,7 @@ export function QuoteDetailPage() {
     setOrderError(null);
     try {
       const order = await createOrder.mutateAsync(quoteId);
-      navigate(`/auftraege/${order.id}`);
+      navigate(`/app/auftraege/${order.id}`);
     } catch (err) {
       setOrderError(err instanceof ApiError ? err.message : "Auftrag konnte nicht erstellt werden.");
     }
@@ -43,12 +43,12 @@ export function QuoteDetailPage() {
   async function handleDeleteQuote() {
     if (!confirm(`Angebot ${quote!.angebotsnummer} wirklich löschen?`)) return;
     await deleteQuote.mutateAsync(quote!.id);
-    navigate("/angebote");
+    navigate("/app/angebote");
   }
 
   return (
     <div>
-      <Link to="/angebote" className="back-link">
+      <Link to="/app/angebote" className="back-link">
         ← Zurück zu Angeboten
       </Link>
 
@@ -68,7 +68,7 @@ export function QuoteDetailPage() {
               <span>
                 Auftrag <strong>{existingOrder.auftragsnummer}</strong> wurde bereits erstellt.
               </span>
-              <Link className="btn btn-secondary" to={`/auftraege/${existingOrder.id}`}>
+              <Link className="btn btn-secondary" to={`/app/auftraege/${existingOrder.id}`}>
                 Zum Auftrag
               </Link>
             </>

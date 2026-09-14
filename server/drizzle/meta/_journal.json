@@ -50,6 +50,13 @@
       "when": 1789399648844,
       "tag": "0006_misty_cerise",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789412201780,
+      "tag": "0007_broken_human_torch",
+      "breakpoints": true
     }
   ]
 }

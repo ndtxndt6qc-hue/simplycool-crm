@@ -21,7 +21,7 @@ export function QuoteCreateModal({ onClose }: { onClose: () => void }) {
     try {
       const quote = await createQuote.mutateAsync({ customerId: Number(customerId), propertyId: Number(propertyId) });
       onClose();
-      navigate(`/angebote/${quote.id}`);
+      navigate(`/app/angebote/${quote.id}`);
     } catch {
       setError("Erstellen fehlgeschlagen.");
     }

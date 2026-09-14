@@ -49,7 +49,7 @@ export function QuotesPage() {
               {quotes.map((q) => (
                 <tr key={q.id}>
                   <td>
-                    <Link to={`/angebote/${q.id}`} className="table-link">
+                    <Link to={`/app/angebote/${q.id}`} className="table-link">
                       {q.angebotsnummer}
                     </Link>
                   </td>

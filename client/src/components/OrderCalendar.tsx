@@ -79,7 +79,7 @@ export function OrderCalendar({ orders }: { orders: OrderListEntry[] }) {
               {dayOrders.map((o) => (
                 <Link
                   key={o.id}
-                  to={`/auftraege/${o.id}`}
+                  to={`/app/auftraege/${o.id}`}
                   style={{
                     display: "block",
                     marginTop: 2,

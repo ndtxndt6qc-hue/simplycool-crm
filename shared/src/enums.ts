@@ -1,4 +1,12 @@
-export const LEAD_QUELLEN = ["telefon", "website", "empfehlung", "sonstige"] as const;
+export const LEAD_QUELLEN = [
+  "telefon",
+  "website",
+  "empfehlung",
+  "sonstige",
+  "google",
+  "facebook",
+  "flyer",
+] as const;
 export type LeadQuelle = (typeof LEAD_QUELLEN)[number];
 
 export const LEAD_STATUS = [
@@ -72,3 +80,6 @@ export type AbklaerungDurch = (typeof ABKLAERUNG_DURCH_OPTIONEN)[number];
 
 export const RABATT_TYPEN = ["prozent", "betrag"] as const;
 export type RabattTyp = (typeof RABATT_TYPEN)[number];
+
+export const ORDER_REFERENZ_FOTO_TYPEN = ["vorher", "nachher"] as const;
+export type OrderReferenzFotoTyp = (typeof ORDER_REFERENZ_FOTO_TYPEN)[number];

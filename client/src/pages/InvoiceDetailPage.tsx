@@ -63,7 +63,7 @@ export function InvoiceDetailPage() {
 
   return (
     <div>
-      <Link to="/rechnungen" className="back-link">
+      <Link to="/app/rechnungen" className="back-link">
         ← Zurück zu Rechnungen
       </Link>
 

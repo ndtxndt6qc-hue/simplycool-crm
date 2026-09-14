@@ -56,7 +56,7 @@ export function OrdersPage() {
               {orders.map((o) => (
                 <tr key={o.id}>
                   <td>
-                    <Link to={`/auftraege/${o.id}`} className="table-link">
+                    <Link to={`/app/auftraege/${o.id}`} className="table-link">
                       {o.auftragsnummer}
                     </Link>
                   </td>

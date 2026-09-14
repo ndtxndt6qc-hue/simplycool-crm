@@ -4,15 +4,15 @@ import { useAuth } from "../lib/auth";
 import { useSettings } from "../lib/settings";
 
 const NAV_ITEMS = [
-  { to: "/", label: "Dashboard", end: true },
-  { to: "/leads", label: "Leads" },
-  { to: "/kunden", label: "Kunden" },
-  { to: "/geraete", label: "Geräte & Lager" },
-  { to: "/angebote", label: "Angebote" },
-  { to: "/auftraege", label: "Aufträge" },
-  { to: "/rechnungen", label: "Rechnungen" },
-  { to: "/gemeinde-anforderungen", label: "Gemeinde-Anforderungen" },
-  { to: "/einstellungen", label: "Einstellungen" },
+  { to: "/app", label: "Dashboard", end: true },
+  { to: "/app/leads", label: "Leads" },
+  { to: "/app/kunden", label: "Kunden" },
+  { to: "/app/geraete", label: "Geräte & Lager" },
+  { to: "/app/angebote", label: "Angebote" },
+  { to: "/app/auftraege", label: "Aufträge" },
+  { to: "/app/rechnungen", label: "Rechnungen" },
+  { to: "/app/gemeinde-anforderungen", label: "Gemeinde-Anforderungen" },
+  { to: "/app/einstellungen", label: "Einstellungen" },
 ];
 
 export function Layout() {
