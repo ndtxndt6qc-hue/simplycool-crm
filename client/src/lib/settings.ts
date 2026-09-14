@@ -21,6 +21,7 @@ export type Settings = {
   angebotSperreNachVersand: boolean;
   abnahmeprotokollVorlagePfad: string | null;
   installationsanweisungVorlagePfad: string | null;
+  adminBenachrichtigungEmail: string | null;
 };
 
 export type SettingsInput = Partial<{
@@ -39,6 +40,7 @@ export type SettingsInput = Partial<{
   smtpPassEncrypted: string;
   garantieZeit: string;
   angebotSperreNachVersand: boolean;
+  adminBenachrichtigungEmail: string;
 }>;
 
 export function useSettings() {

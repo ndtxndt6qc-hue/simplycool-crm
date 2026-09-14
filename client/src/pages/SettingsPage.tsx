@@ -23,6 +23,7 @@ export function SettingsPage() {
   const [smtpPort, setSmtpPort] = useState("587");
   const [smtpUser, setSmtpUser] = useState("");
   const [smtpPass, setSmtpPass] = useState("");
+  const [adminBenachrichtigungEmail, setAdminBenachrichtigungEmail] = useState("");
   const [garantieZeit, setGarantieZeit] = useState("");
   const [angebotSperreNachVersand, setAngebotSperreNachVersand] = useState(true);
   const [saved, setSaved] = useState(false);
@@ -42,6 +43,7 @@ export function SettingsPage() {
     setSmtpHost(settings.smtpHost ?? "");
     setSmtpPort(settings.smtpPort ? String(settings.smtpPort) : "587");
     setSmtpUser(settings.smtpUser ?? "");
+    setAdminBenachrichtigungEmail(settings.adminBenachrichtigungEmail ?? "");
     setGarantieZeit(settings.garantieZeit ?? "");
     setAngebotSperreNachVersand(settings.angebotSperreNachVersand ?? true);
   }, [settings]);
@@ -64,6 +66,7 @@ export function SettingsPage() {
         smtpHost,
         smtpPort: smtpPort ? Number(smtpPort) : undefined,
         smtpUser,
+        adminBenachrichtigungEmail,
         garantieZeit,
         angebotSperreNachVersand,
         ...(smtpPass ? { smtpPassEncrypted: smtpPass } : {}),
@@ -235,6 +238,20 @@ export function SettingsPage() {
           <div className="field">
             <label htmlFor="s-smtp-pass">Passwort {settings?.smtpPassSet && "(gesetzt — leer lassen um zu behalten)"}</label>
             <input id="s-smtp-pass" type="password" value={smtpPass} onChange={(e) => setSmtpPass(e.target.value)} />
+          </div>
+          <div className="field">
+            <label htmlFor="s-admin-email">Admin-E-Mail für neue Website-Leads</label>
+            <input
+              id="s-admin-email"
+              type="email"
+              value={adminBenachrichtigungEmail}
+              onChange={(e) => setAdminBenachrichtigungEmail(e.target.value)}
+              placeholder="z.B. info@simply-cool.ch"
+            />
+            <p style={{ fontSize: 11, color: "var(--color-text-muted)", margin: "4px 0 0" }}>
+              Bei jeder neuen Anfrage über das Kontaktformular der Webseite wird an diese Adresse eine
+              Benachrichtigung gesendet (nur wenn SMTP oben konfiguriert ist).
+            </p>
           </div>
         </div>
 

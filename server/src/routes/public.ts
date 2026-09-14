@@ -9,6 +9,7 @@ import { leads, orderItems, orderReferenzFotos, orders, properties } from "../db
 import { asyncHandler } from "../utils/asyncHandler.js";
 import type { LeadQuelle } from "@klimainstall/shared";
 import { getOrCreateSettings } from "../services/settings.js";
+import { sendMail } from "../services/mailer.js";
 
 export const publicRouter = Router();
 
@@ -156,18 +157,42 @@ publicRouter.post(
       return;
     }
 
-    await db.insert(leads).values({
-      name: parsed.data.name,
-      plz: parsed.data.plz,
-      ort: parsed.data.ort,
-      telefon: parsed.data.telefon || undefined,
-      email: parsed.data.email || undefined,
-      notiz: parsed.data.nachricht || undefined,
-      quelle: normalizeQuelle(parsed.data.quelle),
-      status: "neu",
-    });
+    const [lead] = await db
+      .insert(leads)
+      .values({
+        name: parsed.data.name,
+        plz: parsed.data.plz,
+        ort: parsed.data.ort,
+        telefon: parsed.data.telefon || undefined,
+        email: parsed.data.email || undefined,
+        notiz: parsed.data.nachricht || undefined,
+        quelle: normalizeQuelle(parsed.data.quelle),
+        status: "neu",
+      })
+      .returning();
 
-    // TODO (Schritt 8): Admin-E-Mail-Benachrichtigung bei neuem Lead.
+    try {
+      const settings = await getOrCreateSettings();
+      if (settings.smtpHost && settings.smtpUser && settings.adminBenachrichtigungEmail) {
+        await sendMail(settings, {
+          to: settings.adminBenachrichtigungEmail,
+          subject: `Neuer Lead: ${lead.name} aus ${lead.ort}`,
+          text: [
+            "Neue Anfrage über die Webseite simply-cool.ch:",
+            "",
+            `Name: ${lead.name}`,
+            `Telefon: ${lead.telefon ?? "—"}`,
+            `E-Mail: ${lead.email ?? "—"}`,
+            `PLZ/Ort: ${lead.plz} ${lead.ort}`,
+            `Nachricht: ${lead.notiz ?? "—"}`,
+            `Quelle: ${lead.quelle}`,
+          ].join("\n"),
+          attachments: [],
+        });
+      }
+    } catch (err) {
+      console.error("Lead-Benachrichtigung konnte nicht gesendet werden:", err);
+    }
 
     res.status(201).json({ ok: true });
   })

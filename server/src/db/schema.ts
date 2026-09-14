@@ -344,6 +344,7 @@ export const settings = pgTable("settings", {
   smtpPort: integer("smtp_port"),
   smtpUser: varchar("smtp_user", { length: 255 }),
   smtpPassEncrypted: text("smtp_pass_encrypted"),
+  adminBenachrichtigungEmail: varchar("admin_benachrichtigung_email", { length: 255 }),
 });
 
 export const orderDocuments = pgTable("order_documents", {

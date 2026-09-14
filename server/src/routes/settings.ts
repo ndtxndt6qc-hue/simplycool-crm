@@ -33,6 +33,7 @@ const settingsSchema = z.object({
   smtpPassEncrypted: z.string().optional(),
   garantieZeit: z.string().optional(),
   angebotSperreNachVersand: z.boolean().optional(),
+  adminBenachrichtigungEmail: z.string().email().optional().or(z.literal("")),
 });
 
 settingsRouter.get(
