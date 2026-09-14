@@ -115,7 +115,12 @@ export function QuoteDetailPage() {
         </div>
       </div>
 
-      <QuoteGemeindeCard quoteId={quote.id} ort={quote.property.ort} locked={quote.locked} />
+      <QuoteGemeindeCard
+        quoteId={quote.id}
+        ort={quote.property.ort}
+        locked={quote.locked}
+        abklaerungDurch={quote.abklaerungDurch}
+      />
 
       <div className="card" style={{ padding: 0, overflowX: "auto" }}>
         <table className="data-table">
@@ -152,7 +157,7 @@ export function QuoteDetailPage() {
         </table>
       </div>
 
-      {!quote.locked && <QuoteItemForm quoteId={quote.id} />}
+      {!quote.locked && <QuoteItemForm quoteId={quote.id} nettoSumme={quote.summe} />}
 
       <div style={{ display: "flex", gap: 24, marginTop: 24 }}>
         <div className="card" style={{ width: 280 }}>
@@ -168,6 +173,12 @@ export function QuoteDetailPage() {
             <span>Total</span>
             <span>{formatChf(total)}</span>
           </div>
+          {quote.summeOptional > 0 && (
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6, color: "#92400e", fontSize: 12 }}>
+              <span>Optionale Positionen (nicht enthalten)</span>
+              <span>{formatChf(quote.summeOptional)}</span>
+            </div>
+          )}
         </div>
         <div className="card" style={{ width: 280, background: "#f8fafc" }}>
           <div style={{ fontSize: 12, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.03em", marginBottom: 8 }}>

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
-import type { QuoteItemTyp, QuoteStatus } from "@klimainstall/shared";
+import type { AbklaerungDurch, QuoteItemTyp, QuoteStatus } from "@klimainstall/shared";
 import type { Customer } from "./customers";
 import type { Property } from "./properties";
 import type { GemeindeAnforderung } from "./gemeindeAnforderungen";
@@ -16,6 +16,7 @@ export type QuoteItem = {
   einzelpreis: string;
   einkaufspreisIntern: string;
   sortOrder: number;
+  optional: boolean;
 };
 
 export type Quote = {
@@ -28,6 +29,7 @@ export type Quote = {
   datum: string;
   gueltigBis: string | null;
   mwstSatz: string;
+  abklaerungDurch: AbklaerungDurch | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -43,6 +45,7 @@ export type QuoteDetail = Quote & {
   property: Property;
   items: QuoteItem[];
   summe: number;
+  summeOptional: number;
   deckungsbeitrag: number;
   locked: boolean;
 };
@@ -55,6 +58,7 @@ export type QuoteItemInput = {
   einheit?: string;
   einzelpreis: number;
   einkaufspreisIntern: number;
+  optional?: boolean;
 };
 
 export function useQuotes() {
@@ -84,8 +88,12 @@ export function useCreateQuote() {
 export function useUpdateQuote(id: number) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { status?: QuoteStatus; gueltigBis?: string; mwstSatz?: number }) =>
-      api.patch<Quote>(`/quotes/${id}`, input),
+    mutationFn: (input: {
+      status?: QuoteStatus;
+      gueltigBis?: string;
+      mwstSatz?: number;
+      abklaerungDurch?: AbklaerungDurch | null;
+    }) => api.patch<Quote>(`/quotes/${id}`, input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["quotes", id] });
       qc.invalidateQueries({ queryKey: ["quotes"] });

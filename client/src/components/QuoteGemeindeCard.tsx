@@ -1,22 +1,34 @@
 import { useEffect, useRef, useState } from "react";
-import { GEMEINDE_ANFORDERUNGSTYP_LABELS } from "../lib/labels";
+import { ABKLAERUNG_DURCH_LABELS, GEMEINDE_ANFORDERUNGSTYP_LABELS } from "../lib/labels";
+import { ABKLAERUNG_DURCH_OPTIONEN, type AbklaerungDurch } from "@klimainstall/shared";
 import {
   istVeraltet,
   useGemeindeAnforderungen,
   type GemeindeAnforderung,
 } from "../lib/gemeindeAnforderungen";
-import { useApplyGemeindePosition, useQuoteGemeinde, useSetQuoteGemeinde } from "../lib/quotes";
+import { useApplyGemeindePosition, useQuoteGemeinde, useSetQuoteGemeinde, useUpdateQuote } from "../lib/quotes";
 import { GemeindeAnforderungFormModal } from "./GemeindeAnforderungFormModal";
 
 function formatDatum(value: string | null) {
   return value ? new Date(value).toLocaleDateString("de-CH") : null;
 }
 
-export function QuoteGemeindeCard({ quoteId, ort, locked }: { quoteId: number; ort: string; locked: boolean }) {
+export function QuoteGemeindeCard({
+  quoteId,
+  ort,
+  locked,
+  abklaerungDurch,
+}: {
+  quoteId: number;
+  ort: string;
+  locked: boolean;
+  abklaerungDurch: AbklaerungDurch | null;
+}) {
   const { data: info, isLoading } = useQuoteGemeinde(quoteId);
   const { data: alleGemeinden } = useGemeindeAnforderungen();
   const setGemeinde = useSetQuoteGemeinde(quoteId);
   const applyPosition = useApplyGemeindePosition(quoteId);
+  const updateQuote = useUpdateQuote(quoteId);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const appliedForRef = useRef<number | null>(null);
@@ -101,7 +113,7 @@ export function QuoteGemeindeCard({ quoteId, ort, locked }: { quoteId: number; o
         </div>
       )}
 
-      <div className="field" style={{ marginBottom: 0 }}>
+      <div className="field">
         <label htmlFor="quote-gemeinde-select">Gemeinde manuell zuordnen (falls automatische Zuordnung falsch liegt)</label>
         <select
           id="quote-gemeinde-select"
@@ -112,6 +124,26 @@ export function QuoteGemeindeCard({ quoteId, ort, locked }: { quoteId: number; o
           {alleGemeinden?.map((g: GemeindeAnforderung) => (
             <option key={g.id} value={g.id}>
               {g.kanton} · {g.gemeindeName} ({GEMEINDE_ANFORDERUNGSTYP_LABELS[g.anforderungstyp]})
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="field" style={{ marginBottom: 0 }}>
+        <label htmlFor="quote-abklaerung-durch">
+          Klärung Baubewilligung/Meldung durch (gemäss retournierter Auftragsbestätigung)
+        </label>
+        <select
+          id="quote-abklaerung-durch"
+          value={abklaerungDurch ?? ""}
+          onChange={(e) =>
+            updateQuote.mutate({ abklaerungDurch: e.target.value ? (e.target.value as AbklaerungDurch) : null })
+          }
+        >
+          <option value="">— noch nicht retourniert —</option>
+          {ABKLAERUNG_DURCH_OPTIONEN.map((o) => (
+            <option key={o} value={o}>
+              {ABKLAERUNG_DURCH_LABELS[o]}
             </option>
           ))}
         </select>

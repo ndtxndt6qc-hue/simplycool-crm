@@ -159,7 +159,9 @@ ordersRouter.post(
       return;
     }
 
-    const items = await db.select().from(quoteItems).where(eq(quoteItems.quoteId, quoteId));
+    const items = (await db.select().from(quoteItems).where(eq(quoteItems.quoteId, quoteId))).filter(
+      (i) => !i.optional
+    );
 
     const [order] = await db
       .insert(orders)

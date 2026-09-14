@@ -27,6 +27,7 @@ export const QUOTE_ITEM_TYPEN = [
   "fahrt_material",
   "sonderposition",
   "gemeindeabklaerung",
+  "rabatt",
 ] as const;
 export type QuoteItemTyp = (typeof QUOTE_ITEM_TYPEN)[number];
 
@@ -65,3 +66,9 @@ export const GEMEINDE_ANFORDERUNGSTYPEN = [
   "unklar_abklaeren",
 ] as const;
 export type GemeindeAnforderungstyp = (typeof GEMEINDE_ANFORDERUNGSTYPEN)[number];
+
+export const ABKLAERUNG_DURCH_OPTIONEN = ["simplycool", "bauseits"] as const;
+export type AbklaerungDurch = (typeof ABKLAERUNG_DURCH_OPTIONEN)[number];
+
+export const RABATT_TYPEN = ["prozent", "betrag"] as const;
+export type RabattTyp = (typeof RABATT_TYPEN)[number];

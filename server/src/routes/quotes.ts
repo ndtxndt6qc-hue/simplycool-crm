@@ -14,7 +14,7 @@ import {
   quotes,
 } from "../db/schema.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { QUOTE_ITEM_TYPEN, QUOTE_STATUS } from "@klimainstall/shared";
+import { ABKLAERUNG_DURCH_OPTIONEN, QUOTE_ITEM_TYPEN, QUOTE_STATUS } from "@klimainstall/shared";
 import { getOrCreateSettings } from "../services/settings.js";
 import { renderQuotePdf } from "../pdf/quotePdf.js";
 import { sendMail } from "../services/mailer.js";
@@ -33,6 +33,7 @@ const quoteUpdateSchema = z.object({
   status: z.enum(QUOTE_STATUS).optional(),
   gueltigBis: z.string().optional(),
   mwstSatz: z.number().nonnegative().optional(),
+  abklaerungDurch: z.enum(ABKLAERUNG_DURCH_OPTIONEN).nullable().optional(),
 });
 
 const quoteItemSchema = z.object({
@@ -43,6 +44,7 @@ const quoteItemSchema = z.object({
   einheit: z.string().optional(),
   einzelpreis: z.number(),
   einkaufspreisIntern: z.number().default(0),
+  optional: z.boolean().default(false),
 });
 
 async function isQuoteLocked(quote: { status: string }) {
@@ -64,12 +66,16 @@ async function getQuoteTotals(quoteId: number) {
     .from(quoteItems)
     .where(eq(quoteItems.quoteId, quoteId))
     .orderBy(quoteItems.sortOrder);
-  const summe = items.reduce((acc, i) => acc + Number(i.einzelpreis) * Number(i.menge), 0);
-  const deckungsbeitrag = items.reduce(
+  const verbindlich = items.filter((i) => !i.optional);
+  const summe = verbindlich.reduce((acc, i) => acc + Number(i.einzelpreis) * Number(i.menge), 0);
+  const deckungsbeitrag = verbindlich.reduce(
     (acc, i) => acc + (Number(i.einzelpreis) - Number(i.einkaufspreisIntern)) * Number(i.menge),
     0
   );
-  return { items, summe, deckungsbeitrag };
+  const summeOptional = items
+    .filter((i) => i.optional)
+    .reduce((acc, i) => acc + Number(i.einzelpreis) * Number(i.menge), 0);
+  return { items, summe, deckungsbeitrag, summeOptional };
 }
 
 quotesRouter.get(
@@ -129,9 +135,18 @@ quotesRouter.get(
       return;
     }
 
-    const { items, summe, deckungsbeitrag } = await getQuoteTotals(quoteId);
+    const { items, summe, deckungsbeitrag, summeOptional } = await getQuoteTotals(quoteId);
     const locked = await isQuoteLocked(row.quote);
-    res.json({ ...row.quote, customer: row.customer, property: row.property, items, summe, deckungsbeitrag, locked });
+    res.json({
+      ...row.quote,
+      customer: row.customer,
+      property: row.property,
+      items,
+      summe,
+      deckungsbeitrag,
+      summeOptional,
+      locked,
+    });
   })
 );
 
@@ -371,6 +386,7 @@ quotesRouter.post(
         einzelpreis: parsed.data.einzelpreis.toString(),
         einkaufspreisIntern: parsed.data.einkaufspreisIntern.toString(),
         sortOrder: Number(maxRow.maxSort) + 1,
+        optional: parsed.data.optional,
       })
       .returning();
     res.status(201).json(item);

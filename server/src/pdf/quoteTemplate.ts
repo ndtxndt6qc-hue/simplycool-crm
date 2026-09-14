@@ -18,6 +18,7 @@ const ITEM_TYP_LABELS: Record<string, string> = {
   fahrt_material: "Fahrt/Kleinmaterial",
   sonderposition: "Sonderposition",
   gemeindeabklaerung: "Gemeinde-Abklärung",
+  rabatt: "Rabatt",
 };
 
 function chf(value: number) {
@@ -52,6 +53,7 @@ const TECHNIKER_ICON_SVG = `<svg viewBox="0 0 24 24" width="26" height="26" fill
 const MATERIAL_ICON_SVG = `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#475569" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l1.5-4.5A2 2 0 0 1 6.4 7h11.2a2 2 0 0 1 1.9 1.5L21 13"/><rect x="2.5" y="13" width="19" height="5" rx="1"/><circle cx="7" cy="18.5" r="1.5"/><circle cx="17" cy="18.5" r="1.5"/></svg>`;
 const KERNBOHRUNG_ICON_SVG = `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#475569" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.2"/></svg>`;
 const GEMEINDE_ICON_SVG = `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#475569" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V9l8-5 8 5v12"/><path d="M9 21v-6h6v6"/></svg>`;
+const RABATT_ICON_SVG = `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#475569" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12 12 20 4 12V4h8z"/><circle cx="9" cy="9" r="1.4" fill="#475569" stroke="none"/></svg>`;
 
 function itemImageHtml(item: InferSelectModel<typeof quoteItems> & { deviceBildPfad?: string | null }): string {
   if (item.typ === "geraet") {
@@ -62,12 +64,16 @@ function itemImageHtml(item: InferSelectModel<typeof quoteItems> & { deviceBildP
   if (item.typ === "fahrt_material") return MATERIAL_ICON_SVG;
   if (item.typ === "kernbohrung") return KERNBOHRUNG_ICON_SVG;
   if (item.typ === "gemeindeabklaerung") return GEMEINDE_ICON_SVG;
+  if (item.typ === "rabatt") return RABATT_ICON_SVG;
   return "";
 }
 
 export function renderQuoteHtml({ quote, customer, property, items, settings: cfg }: QuoteData): string {
   const mwstSatz = Number(quote.mwstSatz);
-  const netto = items.reduce((acc, i) => acc + Number(i.einzelpreis) * Number(i.menge), 0);
+  const verbindlicheItems = items.filter((i) => !i.optional);
+  const optionaleItems = items.filter((i) => i.optional);
+  const netto = verbindlicheItems.reduce((acc, i) => acc + Number(i.einzelpreis) * Number(i.menge), 0);
+  const nettoOptional = optionaleItems.reduce((acc, i) => acc + Number(i.einzelpreis) * Number(i.menge), 0);
   const mwstBetrag = netto * (mwstSatz / 100);
   const total = netto + mwstBetrag;
   const logo = logoDataUri(cfg.logoPfad);
@@ -79,10 +85,10 @@ export function renderQuoteHtml({ quote, customer, property, items, settings: cf
   const rows = items
     .map(
       (i) => `
-      <tr>
+      <tr class="${i.optional ? "optional-row" : ""}">
         <td class="img-cell">${itemImageHtml(i)}</td>
         <td>${ITEM_TYP_LABELS[i.typ] ?? i.typ}</td>
-        <td>${escapeHtml(i.beschreibung)}</td>
+        <td>${escapeHtml(i.beschreibung)}${i.optional ? ' <span class="opt-badge">optional</span>' : ""}</td>
         <td class="num">${escapeHtml(formatMenge(i.menge, i.einheit))}</td>
         <td class="num">${chf(Number(i.einzelpreis))}</td>
         <td class="num">${chf(Number(i.einzelpreis) * Number(i.menge))}</td>
@@ -115,7 +121,19 @@ export function renderQuoteHtml({ quote, customer, property, items, settings: cf
       .totals { width: 260px; margin-left: auto; margin-top: 16px; }
       .totals div { display: flex; justify-content: space-between; padding: 4px 8px; font-size: 12px; }
       .totals .grand { font-weight: 700; font-size: 14px; border-top: 1px solid #0f172a; margin-top: 4px; padding-top: 8px; }
+      .totals .optional-line { color: #92400e; }
+      .optional-row td { color: #64748b; font-style: italic; }
+      .opt-badge { display: inline-block; font-style: normal; font-size: 8px; text-transform: uppercase; letter-spacing: 0.04em; background: #fef3c7; color: #92400e; border-radius: 3px; padding: 1px 5px; margin-left: 4px; }
       .footer { margin-top: 60px; font-size: 10px; color: #94a3b8; }
+      .auftragsbestaetigung { page-break-before: always; padding-top: 20px; }
+      .auftragsbestaetigung h2 { font-size: 17px; margin: 0 0 14px; }
+      .auftragsbestaetigung p { font-size: 11px; line-height: 1.6; color: #334155; }
+      .frage-block { margin-top: 20px; padding: 14px; border: 1px solid #cbd5e1; border-radius: 8px; }
+      .frage-block .frage-titel { font-size: 11px; font-weight: 700; margin-bottom: 10px; }
+      .checkbox-zeile { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 11px; }
+      .checkbox-box { display: inline-block; width: 12px; height: 12px; border: 1.3px solid #0f172a; flex-shrink: 0; }
+      .unterschrift-zeile { display: flex; gap: 40px; margin-top: 50px; }
+      .unterschrift-feld { flex: 1; border-top: 1px solid #0f172a; padding-top: 6px; font-size: 10px; color: #64748b; }
     </style>
   </head>
   <body>
@@ -168,10 +186,37 @@ export function renderQuoteHtml({ quote, customer, property, items, settings: cf
       <div><span>Netto</span><span>CHF ${chf(netto)}</span></div>
       <div><span>MWST ${mwstSatz.toFixed(2)}%</span><span>CHF ${chf(mwstBetrag)}</span></div>
       <div class="grand"><span>Total</span><span>CHF ${chf(total)}</span></div>
+      ${
+        optionaleItems.length
+          ? `<div class="optional-line"><span>Optionale Positionen (nicht enthalten)</span><span>CHF ${chf(nettoOptional)}</span></div>`
+          : ""
+      }
     </div>
 
     <div class="footer">
       Wandmontierte Monoblock-Klimageräte — Kühlen &amp; Heizen ohne Aussengerät. Preise inkl. MWST, exkl. allfälliger Sonderleistungen.
+    </div>
+
+    <div class="auftragsbestaetigung">
+      <h2>Auftragsbestätigung</h2>
+      <p>
+        Hiermit bestätige ich, die im Angebot ${escapeHtml(quote.angebotsnummer)} aufgeführten Arbeiten zu den genannten
+        Konditionen in Auftrag zu geben. Bitte dieses Formular unterzeichnet an
+        ${escapeHtml(cfg.firmenname || "")} retournieren.
+      </p>
+
+      <div class="frage-block">
+        <div class="frage-titel">
+          Klärung allfälliger Bewilligungs-/Meldepflichten bei der zuständigen Gemeinde erfolgt durch:
+        </div>
+        <div class="checkbox-zeile"><span class="checkbox-box"></span><span>SimplyCool</span></div>
+        <div class="checkbox-zeile"><span class="checkbox-box"></span><span>Bauseits (durch Auftraggeber)</span></div>
+      </div>
+
+      <div class="unterschrift-zeile">
+        <div class="unterschrift-feld">Ort, Datum</div>
+        <div class="unterschrift-feld">Unterschrift Auftraggeber</div>
+      </div>
     </div>
   </body>
   </html>`;

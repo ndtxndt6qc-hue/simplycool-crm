@@ -1,12 +1,14 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { QUOTE_ITEM_TYPEN, type QuoteItemTyp } from "@klimainstall/shared";
+import { QUOTE_ITEM_TYPEN, RABATT_TYPEN, type QuoteItemTyp, type RabattTyp } from "@klimainstall/shared";
 import { QUOTE_ITEM_TYP_LABELS } from "../lib/labels";
 import { useDevices } from "../lib/devices";
 import { usePartners } from "../lib/partners";
 import { useSettings } from "../lib/settings";
 import { useAddQuoteItem, type QuoteItemInput } from "../lib/quotes";
 
-export function QuoteItemForm({ quoteId }: { quoteId: number }) {
+const RABATT_TYP_LABELS: Record<RabattTyp, string> = { prozent: "Prozent (%)", betrag: "Betrag (CHF)" };
+
+export function QuoteItemForm({ quoteId, nettoSumme }: { quoteId: number; nettoSumme: number }) {
   const [typ, setTyp] = useState<QuoteItemTyp>("geraet");
   const [deviceId, setDeviceId] = useState("");
   const [partnerId, setPartnerId] = useState("");
@@ -15,6 +17,9 @@ export function QuoteItemForm({ quoteId }: { quoteId: number }) {
   const [menge, setMenge] = useState("1");
   const [einzelpreis, setEinzelpreis] = useState("");
   const [einkaufspreisIntern, setEinkaufspreisIntern] = useState("0");
+  const [optional, setOptional] = useState(false);
+  const [rabattTyp, setRabattTyp] = useState<RabattTyp>("prozent");
+  const [rabattWert, setRabattWert] = useState("");
 
   const { data: devices } = useDevices();
   const { data: bohrpartner } = usePartners("bohrpartner");
@@ -33,6 +38,8 @@ export function QuoteItemForm({ quoteId }: { quoteId: number }) {
       setBeschreibung("Montage/Arbeitszeit");
     } else if (typ === "fahrt_material") {
       setBeschreibung("Fahrt/Kleinmaterial");
+    } else if (typ === "rabatt") {
+      setBeschreibung("Rabatt");
     } else {
       setBeschreibung("");
     }
@@ -41,6 +48,7 @@ export function QuoteItemForm({ quoteId }: { quoteId: number }) {
     setEinzelpreis("");
     setEinkaufspreisIntern(typ === "montage" && settings ? Number(settings.stundensatz).toFixed(2) : "0");
     setMenge("1");
+    setRabattWert("");
   }, [typ]);
 
   function handleDeviceChange(id: string) {
@@ -78,19 +86,24 @@ export function QuoteItemForm({ quoteId }: { quoteId: number }) {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    const rabattBetrag =
+      rabattTyp === "prozent" ? (nettoSumme * Number(rabattWert || 0)) / 100 : Number(rabattWert || 0);
     const input: QuoteItemInput = {
       typ,
       deviceId: typ === "geraet" && deviceId ? Number(deviceId) : undefined,
       beschreibung,
-      menge: Number(menge),
-      einzelpreis: Number(einzelpreis || 0),
-      einkaufspreisIntern: Number(einkaufspreisIntern || 0),
+      menge: typ === "rabatt" ? 1 : Number(menge),
+      einzelpreis: typ === "rabatt" ? -Math.abs(rabattBetrag) : Number(einzelpreis || 0),
+      einkaufspreisIntern: typ === "rabatt" ? 0 : Number(einkaufspreisIntern || 0),
+      optional,
     };
     await addItem.mutateAsync(input);
     setBeschreibung(typ === "sonderposition" ? "" : beschreibung);
     setMenge("1");
     setEinzelpreis("");
     setEinkaufspreisIntern("0");
+    setRabattWert("");
+    setOptional(false);
   }
 
   return (
@@ -148,7 +161,7 @@ export function QuoteItemForm({ quoteId }: { quoteId: number }) {
           </>
         )}
 
-        {(typ === "fahrt_material" || typ === "sonderposition" || typ === "gemeindeabklaerung") && (
+        {(typ === "fahrt_material" || typ === "sonderposition" || typ === "gemeindeabklaerung" || typ === "rabatt") && (
           <div className="field" style={{ flex: 1, minWidth: 200 }}>
             <label htmlFor="item-beschreibung">Beschreibung</label>
             <input
@@ -160,40 +173,82 @@ export function QuoteItemForm({ quoteId }: { quoteId: number }) {
           </div>
         )}
 
-        <div className="field" style={{ width: 100 }}>
-          <label htmlFor="item-menge">{typ === "montage" ? "Stunden" : "Menge"}</label>
-          <input
-            id="item-menge"
-            type="number"
-            step={typ === "montage" ? "0.25" : "1"}
-            min="0"
-            value={menge}
-            onChange={(e) => handleMengeChange(e.target.value)}
-            required
-          />
-        </div>
+        {typ === "rabatt" ? (
+          <>
+            <div className="field" style={{ minWidth: 140 }}>
+              <label htmlFor="item-rabatt-typ">Rabatt-Typ</label>
+              <select id="item-rabatt-typ" value={rabattTyp} onChange={(e) => setRabattTyp(e.target.value as RabattTyp)}>
+                {RABATT_TYPEN.map((t) => (
+                  <option key={t} value={t}>
+                    {RABATT_TYP_LABELS[t]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field" style={{ width: 140 }}>
+              <label htmlFor="item-rabatt-wert">Wert</label>
+              <input
+                id="item-rabatt-wert"
+                type="number"
+                step="0.01"
+                min="0"
+                value={rabattWert}
+                onChange={(e) => setRabattWert(e.target.value)}
+                required
+              />
+            </div>
+            {rabattWert && (
+              <div style={{ display: "flex", alignItems: "flex-end", paddingBottom: 8, color: "var(--color-text-muted)", fontSize: 12 }}>
+                = -CHF{" "}
+                {(rabattTyp === "prozent" ? (nettoSumme * Number(rabattWert)) / 100 : Number(rabattWert)).toFixed(2)}
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <div className="field" style={{ width: 100 }}>
+              <label htmlFor="item-menge">{typ === "montage" ? "Stunden" : "Menge"}</label>
+              <input
+                id="item-menge"
+                type="number"
+                step={typ === "montage" ? "0.25" : "1"}
+                min="0"
+                value={menge}
+                onChange={(e) => handleMengeChange(e.target.value)}
+                required
+              />
+            </div>
 
-        <div className="field" style={{ width: 140 }}>
-          <label htmlFor="item-einzelpreis">Verkaufspreis (CHF/Einheit)</label>
-          <input
-            id="item-einzelpreis"
-            type="number"
-            step="0.01"
-            value={einzelpreis}
-            onChange={(e) => setEinzelpreis(e.target.value)}
-            required
-          />
-        </div>
+            <div className="field" style={{ width: 140 }}>
+              <label htmlFor="item-einzelpreis">Verkaufspreis (CHF/Einheit)</label>
+              <input
+                id="item-einzelpreis"
+                type="number"
+                step="0.01"
+                value={einzelpreis}
+                onChange={(e) => setEinzelpreis(e.target.value)}
+                required
+              />
+            </div>
 
-        <div className="field" style={{ width: 140 }}>
-          <label htmlFor="item-kosten">Kosten intern (CHF/Einheit)</label>
-          <input
-            id="item-kosten"
-            type="number"
-            step="0.01"
-            value={einkaufspreisIntern}
-            onChange={(e) => setEinkaufspreisIntern(e.target.value)}
-          />
+            <div className="field" style={{ width: 140 }}>
+              <label htmlFor="item-kosten">Kosten intern (CHF/Einheit)</label>
+              <input
+                id="item-kosten"
+                type="number"
+                step="0.01"
+                value={einkaufspreisIntern}
+                onChange={(e) => setEinkaufspreisIntern(e.target.value)}
+              />
+            </div>
+          </>
+        )}
+
+        <div className="field" style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 6, width: 90 }}>
+          <input id="item-optional" type="checkbox" checked={optional} onChange={(e) => setOptional(e.target.checked)} />
+          <label htmlFor="item-optional" style={{ margin: 0 }}>
+            Optional
+          </label>
         </div>
 
         <div style={{ display: "flex", alignItems: "flex-end" }}>

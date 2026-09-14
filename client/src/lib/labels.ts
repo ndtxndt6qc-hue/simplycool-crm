@@ -1,4 +1,5 @@
 import type {
+  AbklaerungDurch,
   ChecklistPunkt,
   GemeindeAnforderungstyp,
   InvoiceStatus,
@@ -60,6 +61,7 @@ export const QUOTE_ITEM_TYP_LABELS: Record<QuoteItemTyp, string> = {
   fahrt_material: "Fahrt/Kleinmaterial",
   sonderposition: "Sonderposition",
   gemeindeabklaerung: "Gemeinde-Abklärung",
+  rabatt: "Rabatt",
 };
 
 export const GEMEINDE_ANFORDERUNGSTYP_LABELS: Record<GemeindeAnforderungstyp, string> = {
@@ -67,6 +69,11 @@ export const GEMEINDE_ANFORDERUNGSTYP_LABELS: Record<GemeindeAnforderungstyp, st
   meldepflicht: "Meldepflicht",
   baubewilligungspflicht: "Baubewilligungspflicht",
   unklar_abklaeren: "Unklar — abklären",
+};
+
+export const ABKLAERUNG_DURCH_LABELS: Record<AbklaerungDurch, string> = {
+  simplycool: "SimplyCool",
+  bauseits: "Bauseits (durch Auftraggeber)",
 };
 
 export const KUNDEN_TYP_LABELS: Record<KundenTyp, string> = {

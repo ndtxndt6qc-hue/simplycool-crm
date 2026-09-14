@@ -31,6 +31,7 @@ export const quoteItemTypEnum = pgEnum("quote_item_typ", [
   "fahrt_material",
   "sonderposition",
   "gemeindeabklaerung",
+  "rabatt",
 ]);
 export const orderStatusEnum = pgEnum("order_status", [
   "offen",
@@ -70,6 +71,7 @@ export const gemeindeAnforderungstypEnum = pgEnum("gemeinde_anforderungstyp", [
   "baubewilligungspflicht",
   "unklar_abklaeren",
 ]);
+export const abklaerungDurchEnum = pgEnum("abklaerung_durch", ["simplycool", "bauseits"]);
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -211,6 +213,7 @@ export const quotes = pgTable("quotes", {
     onDelete: "set null",
   }),
   gemeindeAbklaerungVorgeschlagen: boolean("gemeinde_abklaerung_vorgeschlagen").notNull().default(false),
+  abklaerungDurch: abklaerungDurchEnum("abklaerung_durch"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -226,6 +229,7 @@ export const quoteItems = pgTable("quote_items", {
   einzelpreis: numeric("einzelpreis", { precision: 10, scale: 2 }).notNull(),
   einkaufspreisIntern: numeric("einkaufspreis_intern", { precision: 10, scale: 2 }).notNull().default("0"),
   sortOrder: integer("sort_order").notNull().default(0),
+  optional: boolean("optional").notNull().default(false),
 });
 
 export const orders = pgTable("orders", {

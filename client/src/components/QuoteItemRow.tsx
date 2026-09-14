@@ -22,6 +22,7 @@ export function QuoteItemRow({
   const [einheit, setEinheit] = useState(item.einheit ?? "");
   const [einzelpreis, setEinzelpreis] = useState(item.einzelpreis);
   const [einkaufspreisIntern, setEinkaufspreisIntern] = useState(item.einkaufspreisIntern);
+  const [optional, setOptional] = useState(item.optional);
 
   const updateItem = useUpdateQuoteItem(quoteId);
   const deleteItem = useDeleteQuoteItem(quoteId);
@@ -38,6 +39,7 @@ export function QuoteItemRow({
       einheit: einheit || undefined,
       einzelpreis: Number(einzelpreis),
       einkaufspreisIntern: Number(einkaufspreisIntern),
+      optional,
     });
     setEditing(false);
   }
@@ -83,7 +85,11 @@ export function QuoteItemRow({
             style={{ width: 80 }}
           />
         </td>
-        <td style={{ display: "flex", gap: 4 }}>
+        <td style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 11, marginRight: 4 }}>
+            <input type="checkbox" checked={optional} onChange={(e) => setOptional(e.target.checked)} />
+            optional
+          </label>
           <button type="button" className="btn btn-primary" onClick={handleSave} disabled={updateItem.isPending}>
             OK
           </button>
@@ -96,9 +102,16 @@ export function QuoteItemRow({
   }
 
   return (
-    <tr>
+    <tr style={item.optional ? { color: "var(--color-text-muted)", fontStyle: "italic" } : undefined}>
       <td>{QUOTE_ITEM_TYP_LABELS[item.typ]}</td>
-      <td>{item.beschreibung}</td>
+      <td>
+        {item.beschreibung}
+        {item.optional && (
+          <span className="badge badge-warning" style={{ marginLeft: 6, fontStyle: "normal" }}>
+            optional
+          </span>
+        )}
+      </td>
       <td>
         {item.menge}
         {item.einheit ? ` ${item.einheit}` : ""}
