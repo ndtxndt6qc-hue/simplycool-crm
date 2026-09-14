@@ -82,6 +82,32 @@ export function renderQuoteHtml({ quote, customer, property, items, settings: cf
     .filter(Boolean)
     .join(" — ");
 
+  const headerHtml = `
+    <div class="header">
+      ${logo ? `<img class="logo" src="${logo}" />` : `<div></div>`}
+      <div class="company">
+        <strong>${escapeHtml(cfg.firmenname || "")}</strong><br/>
+        ${escapeHtml(cfg.strasse || "")}<br/>
+        ${escapeHtml(cfg.plz || "")} ${escapeHtml(cfg.ort || "")}
+        ${cfg.mwstNummer ? `<br/>MWST: ${escapeHtml(cfg.mwstNummer)}` : ""}
+      </div>
+    </div>`;
+
+  const addressesHtml = `
+    <div class="addresses">
+      <div class="addr-block">
+        <div class="addr-label">Kunde</div>
+        ${escapeHtml(kundenName)}<br/>
+        ${escapeHtml(customer.strasse)}<br/>
+        ${escapeHtml(customer.plz)} ${escapeHtml(customer.ort)}
+      </div>
+      <div class="addr-block">
+        <div class="addr-label">Installationsort</div>
+        ${escapeHtml(property.strasse)}<br/>
+        ${escapeHtml(property.plz)} ${escapeHtml(property.ort)}
+      </div>
+    </div>`;
+
   const rows = items
     .map(
       (i) => `
@@ -125,8 +151,8 @@ export function renderQuoteHtml({ quote, customer, property, items, settings: cf
       .optional-row td { color: #64748b; font-style: italic; }
       .opt-badge { display: inline-block; font-style: normal; font-size: 8px; text-transform: uppercase; letter-spacing: 0.04em; background: #fef3c7; color: #92400e; border-radius: 3px; padding: 1px 5px; margin-left: 4px; }
       .footer { margin-top: 60px; font-size: 10px; color: #94a3b8; }
-      .auftragsbestaetigung { page-break-before: always; padding-top: 20px; }
-      .auftragsbestaetigung h2 { font-size: 17px; margin: 0 0 14px; }
+      .auftragsbestaetigung { page-break-before: always; padding-top: 40px; }
+      .auftragsbestaetigung h2 { font-size: 20px; margin: 0 0 14px; }
       .auftragsbestaetigung p { font-size: 11px; line-height: 1.6; color: #334155; }
       .frage-block { margin-top: 20px; padding: 14px; border: 1px solid #cbd5e1; border-radius: 8px; }
       .frage-block .frage-titel { font-size: 11px; font-weight: 700; margin-bottom: 10px; }
@@ -137,29 +163,9 @@ export function renderQuoteHtml({ quote, customer, property, items, settings: cf
     </style>
   </head>
   <body>
-    <div class="header">
-      ${logo ? `<img class="logo" src="${logo}" />` : `<div></div>`}
-      <div class="company">
-        <strong>${escapeHtml(cfg.firmenname || "")}</strong><br/>
-        ${escapeHtml(cfg.strasse || "")}<br/>
-        ${escapeHtml(cfg.plz || "")} ${escapeHtml(cfg.ort || "")}
-        ${cfg.mwstNummer ? `<br/>MWST: ${escapeHtml(cfg.mwstNummer)}` : ""}
-      </div>
-    </div>
+    ${headerHtml}
 
-    <div class="addresses">
-      <div class="addr-block">
-        <div class="addr-label">Kunde</div>
-        ${escapeHtml(kundenName)}<br/>
-        ${escapeHtml(customer.strasse)}<br/>
-        ${escapeHtml(customer.plz)} ${escapeHtml(customer.ort)}
-      </div>
-      <div class="addr-block">
-        <div class="addr-label">Installationsort</div>
-        ${escapeHtml(property.strasse)}<br/>
-        ${escapeHtml(property.plz)} ${escapeHtml(property.ort)}
-      </div>
-    </div>
+    ${addressesHtml}
 
     <h1>Angebot ${escapeHtml(quote.angebotsnummer)}</h1>
     <div class="meta">
@@ -198,6 +204,10 @@ export function renderQuoteHtml({ quote, customer, property, items, settings: cf
     </div>
 
     <div class="auftragsbestaetigung">
+      ${headerHtml}
+
+      ${addressesHtml}
+
       <h2>Auftragsbestätigung</h2>
       <p>
         Hiermit bestätige ich, die im Angebot ${escapeHtml(quote.angebotsnummer)} aufgeführten Arbeiten zu den genannten
