@@ -15,3 +15,24 @@ export function useBranding() {
     staleTime: 5 * 60 * 1000,
   });
 }
+
+export type PublicReferenzFoto = { id: number; typ: "vorher" | "nachher"; url: string };
+export type PublicReferenz = {
+  id: number;
+  ort: string;
+  anzahlGeraete: number;
+  beschreibung: string | null;
+  fotos: PublicReferenzFoto[];
+};
+
+export function usePublicReferenzen(limit?: number) {
+  return useQuery({
+    queryKey: ["public", "referenzen", limit ?? "all"],
+    queryFn: async () => {
+      const res = await fetch(`/api/public/referenzen${limit ? `?limit=${limit}` : ""}`);
+      if (!res.ok) throw new Error("Referenzen konnten nicht geladen werden.");
+      return res.json() as Promise<PublicReferenz[]>;
+    },
+    staleTime: 60 * 1000,
+  });
+}

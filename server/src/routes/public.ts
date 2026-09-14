@@ -3,8 +3,9 @@ import { z } from "zod";
 import rateLimit from "express-rate-limit";
 import path from "node:path";
 import fs from "node:fs";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { leads } from "../db/schema.js";
+import { leads, orderItems, orderReferenzFotos, orders, properties } from "../db/schema.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import type { LeadQuelle } from "@klimainstall/shared";
 import { getOrCreateSettings } from "../services/settings.js";
@@ -28,6 +29,65 @@ publicRouter.get(
       return;
     }
     const filePath = path.resolve(process.cwd(), settings.logoPfad.replace(/^\//, ""));
+    if (!fs.existsSync(filePath)) {
+      res.status(404).end();
+      return;
+    }
+    res.sendFile(filePath);
+  })
+);
+
+publicRouter.get(
+  "/referenzen",
+  asyncHandler(async (req, res) => {
+    const limit = req.query.limit ? Number(req.query.limit) : undefined;
+
+    const rows = await db
+      .select({ order: orders, property: properties })
+      .from(orders)
+      .innerJoin(properties, eq(orders.propertyId, properties.id))
+      .where(and(eq(orders.status, "abgeschlossen"), eq(orders.referenzFreigegeben, true)))
+      .orderBy(sql`${orders.createdAt} desc`);
+
+    const orderIds = rows.map((r) => r.order.id);
+    const [fotos, items] = orderIds.length
+      ? await Promise.all([
+          db.select().from(orderReferenzFotos).where(inArray(orderReferenzFotos.orderId, orderIds)),
+          db
+            .select({ orderId: orderItems.orderId, deviceId: orderItems.deviceId })
+            .from(orderItems)
+            .where(inArray(orderItems.orderId, orderIds)),
+        ])
+      : [[], []];
+
+    const result = rows.map(({ order, property }) => ({
+      id: order.id,
+      ort: property.ort,
+      anzahlGeraete: items.filter((i) => i.orderId === order.id && i.deviceId).length,
+      beschreibung: order.referenzBeschreibung,
+      fotos: fotos
+        .filter((f) => f.orderId === order.id)
+        .map((f) => ({ id: f.id, typ: f.typ, url: `/api/public/referenz-foto/${f.id}` })),
+    }));
+
+    res.json(limit ? result.slice(0, limit) : result);
+  })
+);
+
+publicRouter.get(
+  "/referenz-foto/:id",
+  asyncHandler(async (req, res) => {
+    const [foto] = await db.select().from(orderReferenzFotos).where(eq(orderReferenzFotos.id, Number(req.params.id)));
+    if (!foto) {
+      res.status(404).end();
+      return;
+    }
+    const [order] = await db.select().from(orders).where(eq(orders.id, foto.orderId));
+    if (!order || !order.referenzFreigegeben) {
+      res.status(404).end();
+      return;
+    }
+    const filePath = path.resolve(process.cwd(), foto.dateipfad.replace(/^\//, ""));
     if (!fs.existsSync(filePath)) {
       res.status(404).end();
       return;
