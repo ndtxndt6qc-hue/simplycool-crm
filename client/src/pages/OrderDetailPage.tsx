@@ -2,7 +2,15 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { CHECKLIST_PUNKT_LABELS, ORDER_DOCUMENT_TYP_LABELS, ORDER_STATUS_LABELS } from "../lib/labels";
 import { formatChf } from "../lib/format";
-import { useDeleteOrderDocument, useOrder, useToggleChecklistItem, useUpdateOrder, useUploadOrderDocument } from "../lib/orders";
+import {
+  useDeleteOrderDocument,
+  useDeleteReferenzFoto,
+  useOrder,
+  useToggleChecklistItem,
+  useUpdateOrder,
+  useUploadOrderDocument,
+  useUploadReferenzFoto,
+} from "../lib/orders";
 import { usePartners } from "../lib/partners";
 import { useSettings } from "../lib/settings";
 import { useCreateInvoiceFromOrder, useInvoiceByOrder } from "../lib/invoices";
@@ -28,12 +36,15 @@ export function OrderDetailPage() {
   const createInvoice = useCreateInvoiceFromOrder();
   const uploadDocument = useUploadOrderDocument(orderId);
   const deleteDocument = useDeleteOrderDocument(orderId);
+  const uploadReferenzFoto = useUploadReferenzFoto(orderId);
+  const deleteReferenzFoto = useDeleteReferenzFoto(orderId);
 
   const [installationTermin, setInstallationTermin] = useState("");
   const [bohrTermin, setBohrTermin] = useState("");
   const [bohrGleichInstallation, setBohrGleichInstallation] = useState(false);
   const [bohrpartnerId, setBohrpartnerId] = useState("");
   const [invoiceError, setInvoiceError] = useState<string | null>(null);
+  const [referenzBeschreibung, setReferenzBeschreibung] = useState("");
 
   async function handleCreateInvoice() {
     setInvoiceError(null);
@@ -53,6 +64,7 @@ export function OrderDetailPage() {
       !!order.installationTermin && !!order.bohrTermin && order.installationTermin === order.bohrTermin
     );
     setBohrpartnerId(order.bohrpartnerId ? String(order.bohrpartnerId) : "");
+    setReferenzBeschreibung(order.referenzBeschreibung ?? "");
   }, [order]);
 
   if (isLoading || !order) {
@@ -245,6 +257,105 @@ export function OrderDetailPage() {
                 e.target.value = "";
               }}
             />
+          </div>
+        </div>
+
+        <div className="card" style={{ flex: 1, minWidth: 280 }}>
+          <h3 style={{ marginBottom: 16 }}>Referenz (öffentliche Webseite)</h3>
+          <div className="field" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <input
+              id="order-referenz-freigegeben"
+              type="checkbox"
+              checked={order.referenzFreigegeben}
+              onChange={(e) => updateOrder.mutate({ referenzFreigegeben: e.target.checked })}
+            />
+            <label htmlFor="order-referenz-freigegeben" style={{ margin: 0 }}>
+              Als Referenz auf simply-cool.ch anzeigen
+            </label>
+          </div>
+          {order.status !== "abgeschlossen" && (
+            <p style={{ fontSize: 12, color: "var(--color-text-muted)", margin: "0 0 12px" }}>
+              Wird erst öffentlich sichtbar, sobald der Auftrag abgeschlossen ist.
+            </p>
+          )}
+
+          <div className="field">
+            <label htmlFor="order-referenz-beschreibung">Öffentliche Kurzbeschreibung</label>
+            <textarea
+              id="order-referenz-beschreibung"
+              rows={2}
+              value={referenzBeschreibung}
+              onChange={(e) => setReferenzBeschreibung(e.target.value)}
+              onBlur={() => updateOrder.mutate({ referenzBeschreibung })}
+              placeholder='z.B. "Wandklimagerät im Wohnzimmer, kühlt und heizt ohne Aussengerät."'
+            />
+          </div>
+
+          {order.referenzFotos.length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+              {order.referenzFotos.map((foto) => (
+                <div key={foto.id} style={{ position: "relative" }}>
+                  <img
+                    src={foto.dateipfad}
+                    alt={foto.typ}
+                    style={{ width: 80, height: 60, objectFit: "cover", borderRadius: 6, display: "block" }}
+                  />
+                  <span
+                    style={{
+                      position: "absolute",
+                      top: 2,
+                      left: 2,
+                      background: "rgba(15,23,42,0.7)",
+                      color: "#fff",
+                      fontSize: 9,
+                      padding: "1px 4px",
+                      borderRadius: 3,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {foto.typ}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    style={{ position: "absolute", top: 2, right: 2, padding: "0 4px", fontSize: 11, lineHeight: "16px" }}
+                    onClick={() => deleteReferenzFoto.mutate(foto.id)}
+                    aria-label="Foto löschen"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div style={{ display: "flex", gap: 12 }}>
+            <div className="field" style={{ flex: 1 }}>
+              <label htmlFor="order-foto-vorher">Foto "Vorher"</label>
+              <input
+                id="order-foto-vorher"
+                type="file"
+                accept="image/*"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (file) await uploadReferenzFoto.mutateAsync({ file, typ: "vorher" });
+                  e.target.value = "";
+                }}
+              />
+            </div>
+            <div className="field" style={{ flex: 1 }}>
+              <label htmlFor="order-foto-nachher">Foto "Nachher"</label>
+              <input
+                id="order-foto-nachher"
+                type="file"
+                accept="image/*"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (file) await uploadReferenzFoto.mutateAsync({ file, typ: "nachher" });
+                  e.target.value = "";
+                }}
+              />
+            </div>
           </div>
         </div>
       </div>

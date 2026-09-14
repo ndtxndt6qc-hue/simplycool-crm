@@ -1,6 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
-import type { ChecklistPunkt, OrderDocumentTyp, OrderItemStatus, OrderStatus } from "@klimainstall/shared";
+import type {
+  ChecklistPunkt,
+  OrderDocumentTyp,
+  OrderItemStatus,
+  OrderReferenzFotoTyp,
+  OrderStatus,
+} from "@klimainstall/shared";
 import type { Customer } from "./customers";
 import type { Property } from "./properties";
 
@@ -33,6 +39,16 @@ export type Order = {
   installationTermin: string | null;
   bohrTermin: string | null;
   bohrpartnerId: number | null;
+  referenzFreigegeben: boolean;
+  referenzBeschreibung: string | null;
+  createdAt: string;
+};
+
+export type OrderReferenzFoto = {
+  id: number;
+  orderId: number;
+  typ: OrderReferenzFotoTyp;
+  dateipfad: string;
   createdAt: string;
 };
 
@@ -57,6 +73,7 @@ export type OrderDetail = Order & {
   items: OrderItem[];
   checklist: ChecklistItem[];
   documents: OrderDocument[];
+  referenzFotos: OrderReferenzFoto[];
 };
 
 export function useOrders() {
@@ -107,6 +124,8 @@ export function useUpdateOrder(id: number) {
       installationTermin?: string | null;
       bohrTermin?: string | null;
       bohrpartnerId?: number | null;
+      referenzFreigegeben?: boolean;
+      referenzBeschreibung?: string;
     }) => api.patch<Order>(`/orders/${id}`, input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["orders", id] });
@@ -151,6 +170,33 @@ export function useDeleteOrderDocument(orderId: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (docId: number) => api.delete<void>(`/orders/${orderId}/documents/${docId}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["orders", orderId] }),
+  });
+}
+
+export function useUploadReferenzFoto(orderId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ file, typ }: { file: File; typ: OrderReferenzFotoTyp }) => {
+      const formData = new FormData();
+      formData.append("datei", file);
+      formData.append("typ", typ);
+      const res = await fetch(`/api/orders/${orderId}/referenz-fotos`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+      if (!res.ok) throw new Error("Upload fehlgeschlagen.");
+      return res.json() as Promise<OrderReferenzFoto>;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["orders", orderId] }),
+  });
+}
+
+export function useDeleteReferenzFoto(orderId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (fotoId: number) => api.delete<void>(`/orders/${orderId}/referenz-fotos/${fotoId}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["orders", orderId] }),
   });
 }

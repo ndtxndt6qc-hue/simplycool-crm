@@ -12,6 +12,7 @@ import {
   orderChecklistItems,
   orderDocuments,
   orderItems,
+  orderReferenzFotos,
   orders,
   properties,
   quoteItems,
@@ -19,7 +20,7 @@ import {
   stockMovements,
 } from "../db/schema.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { CHECKLIST_PUNKTE, ORDER_DOCUMENT_TYPEN, ORDER_STATUS } from "@klimainstall/shared";
+import { CHECKLIST_PUNKTE, ORDER_DOCUMENT_TYPEN, ORDER_REFERENZ_FOTO_TYPEN, ORDER_STATUS } from "@klimainstall/shared";
 
 export const ordersRouter = Router();
 
@@ -37,6 +38,24 @@ const orderDocumentUpload = multer({
       !["application/pdf", "image/png", "image/jpeg", "image/webp"].includes(file.mimetype)
     ) {
       cb(new Error("Nur PDF, PNG oder JPEG erlaubt."));
+      return;
+    }
+    cb(null, true);
+  },
+});
+
+const ORDER_REFERENZ_FOTO_DIR = path.resolve(process.cwd(), "uploads", "order-referenz-fotos");
+fs.mkdirSync(ORDER_REFERENZ_FOTO_DIR, { recursive: true });
+
+const orderReferenzFotoUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, ORDER_REFERENZ_FOTO_DIR),
+    filename: (_req, file, cb) => cb(null, `${crypto.randomUUID()}${path.extname(file.originalname).toLowerCase()}`),
+  }),
+  limits: { fileSize: 8 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.mimetype)) {
+      cb(new Error("Nur PNG, JPEG oder WEBP erlaubt."));
       return;
     }
     cb(null, true);
@@ -105,8 +124,51 @@ ordersRouter.get(
       .select()
       .from(orderDocuments)
       .where(eq(orderDocuments.orderId, orderId));
+    const referenzFotos = await db
+      .select()
+      .from(orderReferenzFotos)
+      .where(eq(orderReferenzFotos.orderId, orderId));
 
-    res.json({ ...row.order, customer: row.customer, property: row.property, items, checklist, documents });
+    res.json({
+      ...row.order,
+      customer: row.customer,
+      property: row.property,
+      items,
+      checklist,
+      documents,
+      referenzFotos,
+    });
+  })
+);
+
+ordersRouter.post(
+  "/:id/referenz-fotos",
+  orderReferenzFotoUpload.single("datei"),
+  asyncHandler(async (req, res) => {
+    if (!req.file) {
+      res.status(400).json({ error: "Keine Datei erhalten." });
+      return;
+    }
+    const orderId = Number(req.params.id);
+    const typRaw = typeof req.body?.typ === "string" ? req.body.typ : "";
+    if (!ORDER_REFERENZ_FOTO_TYPEN.includes(typRaw as (typeof ORDER_REFERENZ_FOTO_TYPEN)[number])) {
+      res.status(400).json({ error: "typ muss 'vorher' oder 'nachher' sein." });
+      return;
+    }
+    const dateipfad = `/uploads/order-referenz-fotos/${req.file.filename}`;
+    const [foto] = await db
+      .insert(orderReferenzFotos)
+      .values({ orderId, typ: typRaw as (typeof ORDER_REFERENZ_FOTO_TYPEN)[number], dateipfad })
+      .returning();
+    res.status(201).json(foto);
+  })
+);
+
+ordersRouter.delete(
+  "/:id/referenz-fotos/:fotoId",
+  asyncHandler(async (req, res) => {
+    await db.delete(orderReferenzFotos).where(eq(orderReferenzFotos.id, Number(req.params.fotoId)));
+    res.status(204).send();
   })
 );
 
@@ -208,6 +270,8 @@ const orderUpdateSchema = z.object({
   installationTermin: z.string().nullable().optional(),
   bohrTermin: z.string().nullable().optional(),
   bohrpartnerId: z.number().int().nullable().optional(),
+  referenzFreigegeben: z.boolean().optional(),
+  referenzBeschreibung: z.string().optional(),
 });
 
 ordersRouter.patch(
