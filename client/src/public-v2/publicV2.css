@@ -1,0 +1,526 @@
+/* SimplyCool — Design "V2", angelehnt an das-klimageraet.ch:
+   dunkler Hero/Stat-Bereich, kräftige Typografie, rot/blauer Akzent,
+   helle Karten-Sektionen dazwischen. Komplett unter .pv2 gescoped,
+   damit Design V1 (client/src/public/public.css) unangetastet bleibt. */
+
+.pv2 {
+  --pv2-ink: #0b1220;
+  --pv2-ink-soft: #101a30;
+  --pv2-tint: #f1f5f9;
+  --pv2-accent: #dc2626;
+  --pv2-accent-2: #2563eb;
+  --color-primary: var(--pv2-accent);
+  --color-primary-hover: #b91c1c;
+}
+
+.pv2 h1,
+.pv2 h2,
+.pv2 h3 {
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.pv2-accent {
+  color: var(--pv2-accent-2);
+}
+
+/* Header */
+.pv2-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--pv2-ink);
+}
+
+.pv2-header-inner {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pv2-brand {
+  font-weight: 800;
+  font-size: 18px;
+  color: #fff;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  letter-spacing: -0.01em;
+}
+
+.pv2-brand-logo {
+  height: 30px;
+  display: block;
+  background: #fff;
+  padding: 5px 9px;
+  border-radius: 8px;
+}
+
+.pv2-nav-toggle {
+  display: block;
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  color: #fff;
+}
+
+.pv2-nav {
+  position: fixed;
+  inset: 66px 0 0 0;
+  background: var(--pv2-ink);
+  display: none;
+  flex-direction: column;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.pv2-nav.open {
+  display: flex;
+}
+
+.pv2-nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pv2-nav a {
+  display: block;
+  padding: 12px 8px;
+  text-decoration: none;
+  color: #e2e8f0;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+.pv2-nav a.active,
+.pv2-nav a:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.pv2-nav-cta {
+  margin-top: 16px;
+  display: inline-block;
+  text-align: center;
+  background: var(--pv2-accent);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.pv2-nav-cta:hover {
+  background: #b91c1c;
+}
+
+/* Kicker label */
+.pv2-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--pv2-accent-2);
+  margin-bottom: 14px;
+}
+
+.pv2-kicker::before {
+  content: "";
+  display: inline-block;
+  width: 20px;
+  height: 2px;
+  background: var(--pv2-accent-2);
+}
+
+.pv2-section--dark .pv2-kicker,
+.pv2-section--dark .pv2-kicker::before {
+  color: #93c5fd;
+  background: #93c5fd;
+}
+
+/* Hero */
+.pv2-hero {
+  background:
+    linear-gradient(180deg, rgba(11, 18, 32, 0.75) 0%, rgba(11, 18, 32, 0.92) 100%),
+    radial-gradient(circle at 20% 20%, #1e293b 0%, var(--pv2-ink) 60%);
+  color: #fff;
+}
+
+.pv2-hero-inner {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 56px 20px 40px;
+}
+
+.pv2-hero h1 {
+  font-size: 34px;
+  line-height: 1.15;
+  margin: 0 0 18px;
+  max-width: 680px;
+}
+
+.pv2-hero p {
+  color: #cbd5e1;
+  font-size: 16px;
+  max-width: 520px;
+  margin-bottom: 26px;
+}
+
+.pv2-hero-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Stat bar */
+.pv2-stats {
+  background: var(--pv2-ink);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pv2-stats-inner {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 28px 20px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  text-align: center;
+}
+
+.pv2-stat-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.pv2-stat-label {
+  font-size: 13px;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
+/* Sections */
+.pv2-section {
+  padding: 56px 20px;
+}
+
+.pv2-section--light {
+  background: #ffffff;
+}
+
+.pv2-section--tint {
+  background: var(--pv2-tint);
+}
+
+.pv2-section--dark {
+  background: var(--pv2-ink);
+  color: #fff;
+}
+
+.pv2-section--dark p {
+  color: #94a3b8;
+}
+
+.pv2-section-inner {
+  max-width: 1140px;
+  margin: 0 auto;
+}
+
+.pv2-section-inner--narrow {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.pv2-section h2 {
+  font-size: 28px;
+  line-height: 1.2;
+  margin: 0 0 16px;
+  max-width: 680px;
+}
+
+.pv2-section-intro {
+  color: var(--color-text-muted);
+  max-width: 620px;
+  margin-bottom: 32px;
+  font-size: 15px;
+}
+
+/* Feature grid */
+.pv2-feature-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+.pv2-feature-card {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.pv2-feature-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #dbeafe;
+  color: var(--pv2-accent-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  font-size: 20px;
+}
+
+.pv2-feature-card h3 {
+  font-size: 17px;
+  margin: 0 0 8px;
+}
+
+.pv2-feature-card p {
+  color: var(--color-text-muted);
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Numbered steps */
+.pv2-steps {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 28px;
+}
+
+.pv2-step {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.pv2-step-number {
+  flex: none;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--pv2-accent-2);
+  border: 2px solid var(--pv2-accent-2);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pv2-step h3 {
+  font-size: 16px;
+  margin: 0 0 6px;
+}
+
+.pv2-step p {
+  color: var(--color-text-muted);
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* CTA banner */
+.pv2-cta-banner {
+  text-align: center;
+  padding: 64px 20px;
+  background: var(--pv2-ink);
+  color: #fff;
+}
+
+.pv2-cta-banner h2 {
+  color: #fff;
+  margin: 0 auto 20px;
+}
+
+/* Split (Kontakt) */
+.pv2-split {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+.pv2-info-card {
+  background: var(--pv2-ink);
+  color: #fff;
+  border-radius: 16px;
+  padding: 28px;
+}
+
+.pv2-info-card h3 {
+  margin: 0 0 18px;
+  font-size: 18px;
+}
+
+.pv2-info-row {
+  margin-bottom: 14px;
+}
+
+.pv2-info-row-label {
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: #93c5fd;
+  margin-bottom: 4px;
+}
+
+.pv2-info-row a,
+.pv2-info-row span {
+  color: #fff;
+  text-decoration: none;
+  font-size: 15px;
+}
+
+.pv2-info-row a:hover {
+  text-decoration: underline;
+}
+
+/* Buttons (reuse .public-cta-btn from V1 for the shared component,
+   but round it more here) */
+.pv2 .public-cta-btn {
+  border-radius: 999px;
+}
+
+.pv2-btn-outline {
+  display: inline-block;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.pv2-btn-outline:hover {
+  border-color: #fff;
+}
+
+/* Referenzen grid reuses .public-grid / .public-card from V1 CSS,
+   already imported globally, so it inherits card styling for free. */
+
+/* Footer */
+.pv2-footer {
+  background: #060a14;
+  color: #94a3b8;
+}
+
+.pv2-footer-inner {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 40px 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.pv2-footer-inner strong {
+  color: #fff;
+}
+
+.pv2-footer-inner a {
+  color: #cbd5e1;
+  text-decoration: none;
+}
+
+.pv2-footer-inner a:hover {
+  text-decoration: underline;
+}
+
+.pv2-footer-inner p {
+  margin: 6px 0;
+  font-size: 13px;
+}
+
+.pv2-footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.pv2-footer-copyright {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 12px 20px 24px;
+  font-size: 12px;
+  color: #475569;
+}
+
+/* Tablet and up */
+@media (min-width: 640px) {
+  .pv2-feature-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 860px) {
+  .pv2-nav-toggle {
+    display: none;
+  }
+
+  .pv2-nav {
+    position: static;
+    display: flex !important;
+    flex-direction: row;
+    align-items: center;
+    padding: 0;
+    inset: auto;
+    overflow: visible;
+  }
+
+  .pv2-nav ul {
+    flex-direction: row;
+    gap: 4px;
+  }
+
+  .pv2-nav-cta {
+    margin-top: 0;
+    margin-left: 20px;
+  }
+
+  .pv2-hero h1 {
+    font-size: 46px;
+  }
+
+  .pv2-hero-inner {
+    padding: 88px 20px 56px;
+  }
+
+  .pv2-stats-inner {
+    padding: 36px 20px;
+  }
+
+  .pv2-stat-value {
+    font-size: 34px;
+  }
+
+  .pv2-feature-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .pv2-split {
+    grid-template-columns: 1fr 1.3fr;
+  }
+
+  .pv2-footer-inner {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
