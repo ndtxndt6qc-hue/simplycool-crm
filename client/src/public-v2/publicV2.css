@@ -52,11 +52,11 @@
 }
 
 .pv2-brand-logo {
-  height: 46px;
+  height: 64px;
   display: block;
-  background: #fff;
-  padding: 7px 12px;
-  border-radius: 10px;
+  /* Logo ist dunkelteal/weiss gezeichnet — auf dem dunklen Header sonst kaum lesbar.
+     Kein Rahmen/Box, nur eine monochrome helle Variante fürs Kontrast. */
+  filter: brightness(0) invert(1);
 }
 
 .pv2-nav-toggle {
