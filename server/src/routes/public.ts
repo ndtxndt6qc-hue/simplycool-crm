@@ -10,8 +10,16 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import type { LeadQuelle } from "@klimainstall/shared";
 import { getOrCreateSettings } from "../services/settings.js";
 import { sendMail } from "../services/mailer.js";
+import { getPageTextOverrides } from "../services/pageTexts.js";
 
 export const publicRouter = Router();
+
+publicRouter.get(
+  "/page-texts",
+  asyncHandler(async (_req, res) => {
+    res.json(await getPageTextOverrides());
+  })
+);
 
 publicRouter.get(
   "/branding",

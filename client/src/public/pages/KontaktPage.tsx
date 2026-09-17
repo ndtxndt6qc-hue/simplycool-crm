@@ -1,8 +1,9 @@
 import { Seo } from "../components/Seo";
 import { ContactForm } from "../components/ContactForm";
-import { KONTAKT_EMAIL, KONTAKT_STANDORT, KONTAKT_TELEFON, KONTAKT_TELEFON_HREF } from "../components/PublicLayout";
+import { useKontaktInfo } from "../../lib/pageTexts";
 
 export function KontaktPage() {
+  const { telefon, telefonHref, email, einsatzgebiet } = useKontaktInfo();
   return (
     <>
       <Seo
@@ -25,17 +26,17 @@ export function KontaktPage() {
               <h3 style={{ marginBottom: 12 }}>Direkt erreichbar</h3>
               <p style={{ marginBottom: 8 }}>
                 Telefon:{" "}
-                <a href={KONTAKT_TELEFON_HREF} style={{ color: "var(--color-primary)" }}>
-                  {KONTAKT_TELEFON}
+                <a href={telefonHref} style={{ color: "var(--color-primary)" }}>
+                  {telefon}
                 </a>
               </p>
               <p style={{ marginBottom: 8 }}>
                 E-Mail:{" "}
-                <a href={`mailto:${KONTAKT_EMAIL}`} style={{ color: "var(--color-primary)" }}>
-                  {KONTAKT_EMAIL}
+                <a href={`mailto:${email}`} style={{ color: "var(--color-primary)" }}>
+                  {email}
                 </a>
               </p>
-              <p style={{ margin: 0 }}>Einsatzgebiet: {KONTAKT_STANDORT}</p>
+              <p style={{ margin: 0 }}>Einsatzgebiet: {einsatzgebiet}</p>
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { useBranding, PUBLIC_LOGO_URL } from "../../lib/publicApi";
+import { PageTextsProvider, useKontaktInfo } from "../../lib/pageTexts";
 import "../public.css";
 
 const NAV_ITEMS = [
@@ -11,13 +12,17 @@ const NAV_ITEMS = [
   { to: "/kontakt", label: "Kontakt" },
 ];
 
-export const KONTAKT_TELEFON = "079 000 00 00";
-export const KONTAKT_TELEFON_HREF = "tel:+41790000000";
-export const KONTAKT_EMAIL = "info@simply-cool.ch";
-export const KONTAKT_STANDORT = "Rüfenach AG und Umgebung";
-
 export function PublicLayout() {
+  return (
+    <PageTextsProvider>
+      <PublicLayoutInner />
+    </PageTextsProvider>
+  );
+}
+
+function PublicLayoutInner() {
   const { data: branding } = useBranding();
+  const { telefon, telefonHref, email, einsatzgebiet } = useKontaktInfo();
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
 
@@ -70,11 +75,11 @@ export function PublicLayout() {
         <div className="public-footer-inner">
           <div>
             <strong>{branding?.firmenname || "SimplyCool"}</strong>
-            <p>{KONTAKT_STANDORT}</p>
+            <p>{einsatzgebiet}</p>
             <p>
-              <a href={KONTAKT_TELEFON_HREF}>{KONTAKT_TELEFON}</a>
+              <a href={telefonHref}>{telefon}</a>
               <br />
-              <a href={`mailto:${KONTAKT_EMAIL}`}>{KONTAKT_EMAIL}</a>
+              <a href={`mailto:${email}`}>{email}</a>
             </p>
           </div>
           <div className="public-footer-links">

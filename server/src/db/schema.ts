@@ -356,3 +356,11 @@ export const orderDocuments = pgTable("order_documents", {
   dateipfad: text("dateipfad").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+// Überschreibt einzelne Texte der öffentlichen Webseite (V1 + V2). Fehlt ein Key hier,
+// gilt der Default aus client/src/lib/pageTextRegistry.ts.
+export const pageTexts = pgTable("page_texts", {
+  key: varchar("key", { length: 100 }).primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});

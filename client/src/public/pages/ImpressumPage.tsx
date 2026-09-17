@@ -1,7 +1,8 @@
 import { Seo } from "../components/Seo";
-import { KONTAKT_EMAIL, KONTAKT_TELEFON } from "../components/PublicLayout";
+import { useKontaktInfo } from "../../lib/pageTexts";
 
 export function ImpressumPage() {
+  const { telefon, email } = useKontaktInfo();
   return (
     <>
       <Seo title="Impressum" description="Impressum von SimplyCool." />
@@ -15,9 +16,9 @@ export function ImpressumPage() {
           [PLZ] Rüfenach AG
           <br />
           <br />
-          Telefon: {KONTAKT_TELEFON}
+          Telefon: {telefon}
           <br />
-          E-Mail: {KONTAKT_EMAIL}
+          E-Mail: {email}
           <br />
           <br />
           [Rechtsform, UID/Handelsregister-Nummer falls vorhanden]

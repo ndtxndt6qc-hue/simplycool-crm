@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { useBranding, PUBLIC_LOGO_URL } from "../../lib/publicApi";
-import { KONTAKT_EMAIL, KONTAKT_STANDORT, KONTAKT_TELEFON, KONTAKT_TELEFON_HREF } from "../../public/components/PublicLayout";
+import { PageTextsProvider, useKontaktInfo } from "../../lib/pageTexts";
 import "../../public/public.css";
 import "../publicV2.css";
 
@@ -14,7 +14,16 @@ const NAV_ITEMS = [
 ];
 
 export function PublicLayoutV2() {
+  return (
+    <PageTextsProvider>
+      <PublicLayoutV2Inner />
+    </PageTextsProvider>
+  );
+}
+
+function PublicLayoutV2Inner() {
   const { data: branding } = useBranding();
+  const { telefon, telefonHref, email, einsatzgebiet } = useKontaktInfo();
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
 
@@ -67,11 +76,11 @@ export function PublicLayoutV2() {
         <div className="pv2-footer-inner">
           <div>
             <strong>{branding?.firmenname || "SimplyCool"}</strong>
-            <p>{KONTAKT_STANDORT}</p>
+            <p>{einsatzgebiet}</p>
             <p>
-              <a href={KONTAKT_TELEFON_HREF}>{KONTAKT_TELEFON}</a>
+              <a href={telefonHref}>{telefon}</a>
               <br />
-              <a href={`mailto:${KONTAKT_EMAIL}`}>{KONTAKT_EMAIL}</a>
+              <a href={`mailto:${email}`}>{email}</a>
             </p>
           </div>
           <div className="pv2-footer-links">

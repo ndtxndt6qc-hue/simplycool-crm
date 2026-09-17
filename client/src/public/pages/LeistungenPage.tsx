@@ -1,31 +1,19 @@
 import { Link } from "react-router-dom";
 import { Seo } from "../components/Seo";
 import { Faq } from "../components/Faq";
-
-const FAQ_EINTRAEGE = [
-  {
-    frage: "Brauche ich eine Bewilligung?",
-    antwort:
-      "In den meisten Gemeinden ist für ein Monoblock-Klimagerät ohne Aussengerät keine Baubewilligung nötig, da keine Fassade sichtbar verändert wird. Manche Gemeinden verlangen jedoch eine einfache Meldung. Wir klären das für Ihre Gemeinde vorab ab und weisen es transparent im Angebot aus.",
-  },
-  {
-    frage: "Wie laut ist das Gerät?",
-    antwort:
-      "Da kein Aussengerät nötig ist, entfällt die typische Kompressor-Lautstärke draussen. Das Innengerät läuft im Normalbetrieb auf einem für Wohnräume unauffälligen, leisen Niveau.",
-  },
-  {
-    frage: "Wie lange dauert die Installation?",
-    antwort:
-      "In der Regel ist ein Gerät innerhalb weniger Stunden an einem Tag installiert — inklusive der zwei Kernbohrungen durch die Aussenwand.",
-  },
-  {
-    frage: "Was kostet es ungefähr?",
-    antwort:
-      "Die Kosten hängen von Raumgrösse, Wandbeschaffenheit und Anzahl Geräte ab. Nach einem kurzen Vor-Ort-Termin erhalten Sie ein transparentes Festpreis-Angebot ohne versteckte Kosten.",
-  },
-];
+import { usePageTextMap, getText } from "../../lib/pageTexts";
 
 export function LeistungenPage() {
+  const texts = usePageTextMap();
+  const faqEintraege = [1, 2, 3, 4].map((n) => ({
+    frage: getText(texts, `faq.${n}.frage`),
+    antwort: getText(texts, `faq.${n}.antwort`),
+  }));
+  const phasen = [1, 2, 3, 4].map((n) => ({
+    titel: getText(texts, `leistungen.phase${n}.titel`),
+    text: getText(texts, `leistungen.phase${n}.text`),
+  }));
+
   return (
     <>
       <Seo
@@ -35,39 +23,17 @@ export function LeistungenPage() {
 
       <section className="public-section">
         <h2>Unsere Leistung</h2>
-        <p className="public-section-intro">
-          SimplyCool übernimmt die Installation Ihres Monoblock-Klimageräts von der ersten Beratung bis zur
-          betriebsbereiten Anlage — unkompliziert und aus einer Hand.
-        </p>
+        <p className="public-section-intro">{getText(texts, "leistungen.intro")}</p>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-          <div>
-            <h3 style={{ marginBottom: 6 }}>1. Anfrage & Vorabklärung</h3>
-            <p style={{ color: "var(--color-text-muted)" }}>
-              Sie schildern uns Ihr Vorhaben. Wir prüfen anhand der Gemeinde, ob eine Melde- oder Bewilligungspflicht
-              besteht, und melden uns mit einem Terminvorschlag.
-            </p>
-          </div>
-          <div>
-            <h3 style={{ marginBottom: 6 }}>2. Vor-Ort-Termin & Angebot</h3>
-            <p style={{ color: "var(--color-text-muted)" }}>
-              Wir besichtigen die Räumlichkeiten, beraten zur passenden Geräteleistung und Platzierung und erstellen
-              ein transparentes Festpreis-Angebot.
-            </p>
-          </div>
-          <div>
-            <h3 style={{ marginBottom: 6 }}>3. Installation</h3>
-            <p style={{ color: "var(--color-text-muted)" }}>
-              Am Installationstag montieren wir das Gerät und erstellen die zwei nötigen Kernbohrungen durch die
-              Aussenwand — meist innerhalb weniger Stunden.
-            </p>
-          </div>
-          <div>
-            <h3 style={{ marginBottom: 6 }}>4. Abnahme & Einweisung</h3>
-            <p style={{ color: "var(--color-text-muted)" }}>
-              Wir zeigen Ihnen die Bedienung, halten die Abnahme fest und stehen danach für Fragen zur Verfügung.
-            </p>
-          </div>
+          {phasen.map((phase, idx) => (
+            <div key={phase.titel}>
+              <h3 style={{ marginBottom: 6 }}>
+                {idx + 1}. {phase.titel}
+              </h3>
+              <p style={{ color: "var(--color-text-muted)" }}>{phase.text}</p>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -98,7 +64,7 @@ export function LeistungenPage() {
 
       <section className="public-section-narrow">
         <h2>Häufige Fragen</h2>
-        <Faq eintraege={FAQ_EINTRAEGE} />
+        <Faq eintraege={faqEintraege} />
       </section>
 
       <section className="public-section" style={{ textAlign: "center" }}>

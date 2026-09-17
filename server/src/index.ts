@@ -18,6 +18,7 @@ import { invoicesRouter } from "./routes/invoices.js";
 import { dashboardRouter } from "./routes/dashboard.js";
 import { usersRouter } from "./routes/users.js";
 import { gemeindeAnforderungenRouter } from "./routes/gemeindeAnforderungen.js";
+import { pageTextsRouter } from "./routes/pageTexts.js";
 import { publicRouter } from "./routes/public.js";
 import { requireAuth } from "./middleware/requireAuth.js";
 
@@ -70,6 +71,7 @@ app.use("/api/invoices", invoicesRouter);
 app.use("/api/dashboard", dashboardRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/gemeinde-anforderungen", gemeindeAnforderungenRouter);
+app.use("/api/page-texts", pageTextsRouter);
 
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   if (typeof err === "object" && err !== null && "code" in err && err.code === "23503") {

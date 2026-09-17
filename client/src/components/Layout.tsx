@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { to: "/app/auftraege", label: "Aufträge" },
   { to: "/app/rechnungen", label: "Rechnungen" },
   { to: "/app/gemeinde-anforderungen", label: "Gemeinde-Anforderungen" },
+  { to: "/app/webseite-texte", label: "Webseiten-Texte" },
   { to: "/app/einstellungen", label: "Einstellungen" },
 ];
 

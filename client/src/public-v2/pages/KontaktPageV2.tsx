@@ -1,7 +1,9 @@
 import { Seo } from "../../public/components/Seo";
 import { ContactForm } from "../../public/components/ContactForm";
+import { useKontaktInfo } from "../../lib/pageTexts";
 
 export function KontaktPageV2() {
+  const { telefon, telefonHref, email, einsatzgebiet } = useKontaktInfo();
   return (
     <>
       <Seo
@@ -26,15 +28,15 @@ export function KontaktPageV2() {
               <h3>Direkt erreichbar</h3>
               <div className="pv2-info-row">
                 <div className="pv2-info-row-label">Telefon</div>
-                <a href="tel:+41790000000">079 000 00 00</a>
+                <a href={telefonHref}>{telefon}</a>
               </div>
               <div className="pv2-info-row">
                 <div className="pv2-info-row-label">E-Mail</div>
-                <a href="mailto:info@simply-cool.ch">info@simply-cool.ch</a>
+                <a href={`mailto:${email}`}>{email}</a>
               </div>
               <div className="pv2-info-row">
                 <div className="pv2-info-row-label">Einsatzgebiet</div>
-                <span>Rüfenach AG und Umgebung</span>
+                <span>{einsatzgebiet}</span>
               </div>
             </div>
             <ContactForm title="" />

@@ -1,7 +1,8 @@
 import { Seo } from "../components/Seo";
-import { KONTAKT_EMAIL } from "../components/PublicLayout";
+import { useKontaktInfo } from "../../lib/pageTexts";
 
 export function DatenschutzPage() {
+  const { email } = useKontaktInfo();
   return (
     <>
       <Seo title="Datenschutzerklärung" description="Datenschutzerklärung von SimplyCool." />
@@ -14,7 +15,7 @@ export function DatenschutzPage() {
             Eine Weitergabe an Dritte erfolgt nicht.
           </p>
           <p>
-            Für Fragen zu Ihren gespeicherten Daten oder zur Löschung wenden Sie sich an {KONTAKT_EMAIL}.
+            Für Fragen zu Ihren gespeicherten Daten oder zur Löschung wenden Sie sich an {email}.
           </p>
           <p>
             <em>
