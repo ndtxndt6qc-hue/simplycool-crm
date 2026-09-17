@@ -1,5 +1,5 @@
 /* SimplyCool — Design "V2", angelehnt an das-klimageraet.ch:
-   dunkler Hero/Stat-Bereich, kräftige Typografie, rot/blauer Akzent,
+   dunkler Hero/Stat-Bereich, kräftige Typografie, dunkelblauer Akzent,
    helle Karten-Sektionen dazwischen. Komplett unter .pv2 gescoped,
    damit Design V1 (client/src/public/public.css) unangetastet bleibt. */
 
@@ -7,10 +7,10 @@
   --pv2-ink: #0b1220;
   --pv2-ink-soft: #101a30;
   --pv2-tint: #f1f5f9;
-  --pv2-accent: #dc2626;
+  --pv2-accent: #1e3a8a;
   --pv2-accent-2: #2563eb;
   --color-primary: var(--pv2-accent);
-  --color-primary-hover: #b91c1c;
+  --color-primary-hover: #172d6b;
 }
 
 .pv2 h1,
@@ -119,7 +119,7 @@
 }
 
 .pv2-nav-cta:hover {
-  background: #b91c1c;
+  background: var(--color-primary-hover);
 }
 
 /* Kicker label */
