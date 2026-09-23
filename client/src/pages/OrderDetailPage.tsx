@@ -12,6 +12,7 @@ import {
   useUploadReferenzFoto,
 } from "../lib/orders";
 import { usePartners } from "../lib/partners";
+import { Dropzone } from "../components/Dropzone";
 import { useSettings } from "../lib/settings";
 import { useCreateInvoiceFromOrder, useInvoiceByOrder } from "../lib/invoices";
 import { ApiError } from "../lib/api";
@@ -246,16 +247,11 @@ export function OrderDetailPage() {
           )}
 
           <div className="field">
-            <label htmlFor="order-abnahme-upload">Unterschriebenes Abnahmeprotokoll hochladen</label>
-            <input
-              id="order-abnahme-upload"
-              type="file"
+            <label>Unterschriebenes Abnahmeprotokoll hochladen</label>
+            <Dropzone
+              label="Datei hierher ziehen oder klicken zum Auswählen (PDF oder Bild)"
               accept=".pdf,image/*"
-              onChange={async (e) => {
-                const file = e.target.files?.[0];
-                if (file) await uploadDocument.mutateAsync({ file, typ: "abnahmeprotokoll_signiert" });
-                e.target.value = "";
-              }}
+              onFile={(file) => uploadDocument.mutateAsync({ file, typ: "abnahmeprotokoll_signiert" })}
             />
           </div>
         </div>
