@@ -132,38 +132,39 @@ export function renderQuoteHtml({ quote, customer, property, items, settings: cf
     <meta charset="utf-8" />
     <style>
       * { box-sizing: border-box; }
-      body { font-family: "Helvetica Neue", Arial, sans-serif; color: #0f172a; font-size: 12px; margin: 0; padding: 40px; }
+      body { font-family: "Helvetica Neue", Arial, sans-serif; color: #0f172a; font-size: 13px; margin: 0; padding: 40px; }
       .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
       .logo { max-height: 60px; max-width: 220px; }
-      .company { text-align: right; font-size: 11px; color: #475569; line-height: 1.5; }
+      .company { text-align: right; font-size: 12px; color: #475569; line-height: 1.5; }
       .addresses { display: flex; justify-content: space-between; margin-bottom: 32px; }
-      .addr-block { font-size: 11px; line-height: 1.6; }
-      .addr-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 4px; }
-      h1 { font-size: 20px; margin: 0 0 4px; }
-      .meta { font-size: 11px; color: #475569; margin-bottom: 24px; }
+      .addr-block { font-size: 12px; line-height: 1.6; }
+      .addr-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 4px; }
+      h1 { font-size: 22px; margin: 0 0 4px; }
+      .meta { font-size: 12px; color: #475569; margin-bottom: 24px; }
       table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
-      th { text-align: left; font-size: 9px; text-transform: uppercase; letter-spacing: 0.04em; color: #94a3b8; border-bottom: 1px solid #cbd5e1; padding: 6px 8px; }
-      td { padding: 8px; border-bottom: 1px solid #e2e8f0; font-size: 11px; }
+      th { text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; color: #94a3b8; border-bottom: 1px solid #cbd5e1; padding: 7px 8px; }
+      td { padding: 9px 8px; border-bottom: 1px solid #e2e8f0; font-size: 12px; }
       .num { text-align: right; }
       .img-cell { width: 34px; padding: 6px 4px; }
-      .item-specs { font-size: 9.5px; line-height: 1.5; color: #64748b; margin-top: 3px; }
+      .item-specs { font-size: 10.5px; line-height: 1.5; color: #64748b; margin-top: 3px; }
       .item-img { width: 28px; height: 28px; object-fit: cover; border-radius: 4px; display: block; }
       .totals { width: 260px; margin-left: auto; margin-top: 16px; }
-      .totals div { display: flex; justify-content: space-between; padding: 4px 8px; font-size: 12px; }
-      .totals .grand { font-weight: 700; font-size: 14px; border-top: 1px solid #0f172a; margin-top: 4px; padding-top: 8px; }
+      .totals div { display: flex; justify-content: space-between; padding: 4px 8px; font-size: 13px; }
+      .totals .grand { font-weight: 700; font-size: 15px; border-top: 1px solid #0f172a; margin-top: 4px; padding-top: 8px; }
       .totals .optional-line { color: #92400e; }
       .optional-row td { color: #64748b; font-style: italic; }
-      .opt-badge { display: inline-block; font-style: normal; font-size: 8px; text-transform: uppercase; letter-spacing: 0.04em; background: #fef3c7; color: #92400e; border-radius: 3px; padding: 1px 5px; margin-left: 4px; }
-      .footer { margin-top: 60px; font-size: 10px; color: #94a3b8; }
+      .opt-badge { display: inline-block; font-style: normal; font-size: 9px; text-transform: uppercase; letter-spacing: 0.04em; background: #fef3c7; color: #92400e; border-radius: 3px; padding: 1px 5px; margin-left: 4px; }
+      .footer { margin-top: 60px; font-size: 11px; color: #94a3b8; }
+      .agb-hinweis { margin-top: 6px; font-size: 10px; color: #94a3b8; }
       .auftragsbestaetigung { page-break-before: always; padding-top: 40px; }
-      .auftragsbestaetigung h2 { font-size: 20px; margin: 0 0 14px; }
-      .auftragsbestaetigung p { font-size: 11px; line-height: 1.6; color: #334155; }
+      .auftragsbestaetigung h2 { font-size: 22px; margin: 0 0 14px; }
+      .auftragsbestaetigung p { font-size: 12px; line-height: 1.6; color: #334155; }
       .frage-block { margin-top: 20px; padding: 14px; border: 1px solid #cbd5e1; border-radius: 8px; }
-      .frage-block .frage-titel { font-size: 11px; font-weight: 700; margin-bottom: 10px; }
-      .checkbox-zeile { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 11px; }
+      .frage-block .frage-titel { font-size: 12px; font-weight: 700; margin-bottom: 10px; }
+      .checkbox-zeile { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 12px; }
       .checkbox-box { display: inline-block; width: 12px; height: 12px; border: 1.3px solid #0f172a; flex-shrink: 0; }
       .unterschrift-zeile { display: flex; gap: 40px; margin-top: 50px; }
-      .unterschrift-feld { flex: 1; border-top: 1px solid #0f172a; padding-top: 6px; font-size: 10px; color: #64748b; }
+      .unterschrift-feld { flex: 1; border-top: 1px solid #0f172a; padding-top: 6px; font-size: 11px; color: #64748b; }
     </style>
   </head>
   <body>
@@ -205,6 +206,7 @@ export function renderQuoteHtml({ quote, customer, property, items, settings: cf
 
     <div class="footer">
       Wandmontierte Monoblock-Klimageräte — Kühlen &amp; Heizen ohne Aussengerät. Preise inkl. MWST, exkl. allfälliger Sonderleistungen.
+      <div class="agb-hinweis">Es gelten unsere Allgemeinen Geschäftsbedingungen (AGB), einsehbar unter www.simply-cool.ch/agb.</div>
     </div>
 
     <div class="auftragsbestaetigung">
@@ -215,7 +217,8 @@ export function renderQuoteHtml({ quote, customer, property, items, settings: cf
       <h2>Auftragsbestätigung</h2>
       <p>
         Hiermit bestätige ich, die im Angebot ${escapeHtml(quote.angebotsnummer)} aufgeführten Arbeiten zu den genannten
-        Konditionen in Auftrag zu geben. Bitte dieses Formular unterzeichnet an
+        Konditionen in Auftrag zu geben, und anerkenne die Allgemeinen Geschäftsbedingungen (AGB, einsehbar unter
+        www.simply-cool.ch/agb) als Vertragsbestandteil. Bitte dieses Formular unterzeichnet an
         ${escapeHtml(cfg.firmenname || "")} retournieren.
       </p>
 

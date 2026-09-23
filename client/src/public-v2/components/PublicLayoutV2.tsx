@@ -87,6 +87,7 @@ function PublicLayoutV2Inner() {
           <div className="pv2-footer-links">
             <Link to="/v2/impressum">Impressum</Link>
             <Link to="/v2/datenschutz">Datenschutzerklärung</Link>
+            <Link to="/v2/agb">AGB</Link>
           </div>
         </div>
         <div className="pv2-footer-copyright">

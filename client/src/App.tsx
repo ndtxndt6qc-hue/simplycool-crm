@@ -10,6 +10,7 @@ import { KontaktPage } from "./public/pages/KontaktPage";
 import { TerminPage } from "./public/pages/TerminPage";
 import { ImpressumPage } from "./public/pages/ImpressumPage";
 import { DatenschutzPage } from "./public/pages/DatenschutzPage";
+import { AgbPage } from "./public/pages/AgbPage";
 import { PublicLayoutV2 } from "./public-v2/components/PublicLayoutV2";
 import { HomePageV2 } from "./public-v2/pages/HomePageV2";
 import { LeistungenPageV2 } from "./public-v2/pages/LeistungenPageV2";
@@ -30,6 +31,7 @@ export default function App() {
         <Route path="termin" element={<TerminPage />} />
         <Route path="impressum" element={<ImpressumPage />} />
         <Route path="datenschutz" element={<DatenschutzPage />} />
+        <Route path="agb" element={<AgbPage />} />
       </Route>
 
       {/* Design-Entwurf V2 (angelehnt an das-klimageraet.ch) — separat zum Vergleich,
@@ -43,6 +45,7 @@ export default function App() {
         <Route path="termin" element={<TerminPageV2 />} />
         <Route path="impressum" element={<ImpressumPage />} />
         <Route path="datenschutz" element={<DatenschutzPage />} />
+        <Route path="agb" element={<AgbPage />} />
       </Route>
 
       <Route

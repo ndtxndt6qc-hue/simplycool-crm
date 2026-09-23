@@ -86,6 +86,7 @@ function PublicLayoutInner() {
           <div className="public-footer-links">
             <Link to="/impressum">Impressum</Link>
             <Link to="/datenschutz">Datenschutzerklärung</Link>
+            <Link to="/agb">AGB</Link>
           </div>
         </div>
         <div className="public-footer-copyright">
