@@ -16,6 +16,7 @@ export type Device = {
   lagerbestand: number;
   mindestbestand: number;
   notiz: string | null;
+  spezifikationen: string | null;
   aktiv: boolean;
   verplant: number;
   verfuegbar: number;
@@ -32,6 +33,7 @@ export type DeviceInput = {
   lieferantId?: number;
   mindestbestand?: number;
   notiz?: string;
+  spezifikationen?: string;
   aktiv?: boolean;
 };
 

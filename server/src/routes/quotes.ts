@@ -503,10 +503,18 @@ async function loadQuoteForDocument(quoteId: number) {
     .orderBy(quoteItems.sortOrder);
   const deviceIds = [...new Set(rawItems.filter((i) => i.deviceId).map((i) => i.deviceId!))];
   const deviceRows = deviceIds.length
-    ? await db.select({ id: devices.id, bildPfad: devices.bildPfad }).from(devices).where(inArray(devices.id, deviceIds))
+    ? await db
+        .select({ id: devices.id, bildPfad: devices.bildPfad, spezifikationen: devices.spezifikationen })
+        .from(devices)
+        .where(inArray(devices.id, deviceIds))
     : [];
   const deviceBildById = new Map(deviceRows.map((d) => [d.id, d.bildPfad]));
-  const items = rawItems.map((i) => ({ ...i, deviceBildPfad: i.deviceId ? deviceBildById.get(i.deviceId) ?? null : null }));
+  const deviceSpezifikationenById = new Map(deviceRows.map((d) => [d.id, d.spezifikationen]));
+  const items = rawItems.map((i) => ({
+    ...i,
+    deviceBildPfad: i.deviceId ? deviceBildById.get(i.deviceId) ?? null : null,
+    deviceSpezifikationen: i.deviceId ? deviceSpezifikationenById.get(i.deviceId) ?? null : null,
+  }));
   const settings = await getOrCreateSettings();
   return { quote: row.quote, customer: row.customer, property: row.property, items, settings };
 }

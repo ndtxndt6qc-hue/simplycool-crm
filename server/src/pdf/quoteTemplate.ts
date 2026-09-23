@@ -7,7 +7,7 @@ type QuoteData = {
   quote: InferSelectModel<typeof quotes>;
   customer: InferSelectModel<typeof customers>;
   property: InferSelectModel<typeof properties>;
-  items: (InferSelectModel<typeof quoteItems> & { deviceBildPfad?: string | null })[];
+  items: (InferSelectModel<typeof quoteItems> & { deviceBildPfad?: string | null; deviceSpezifikationen?: string | null })[];
   settings: InferSelectModel<typeof settings>;
 };
 
@@ -114,7 +114,10 @@ export function renderQuoteHtml({ quote, customer, property, items, settings: cf
       <tr class="${i.optional ? "optional-row" : ""}">
         <td class="img-cell">${itemImageHtml(i)}</td>
         <td>${ITEM_TYP_LABELS[i.typ] ?? i.typ}</td>
-        <td>${escapeHtml(i.beschreibung)}${i.optional ? ' <span class="opt-badge">optional</span>' : ""}</td>
+        <td>
+          ${escapeHtml(i.beschreibung)}${i.optional ? ' <span class="opt-badge">optional</span>' : ""}
+          ${i.deviceSpezifikationen ? `<div class="item-specs">${escapeHtml(i.deviceSpezifikationen).replace(/\n/g, "<br/>")}</div>` : ""}
+        </td>
         <td class="num">${escapeHtml(formatMenge(i.menge, i.einheit))}</td>
         <td class="num">${chf(Number(i.einzelpreis))}</td>
         <td class="num">${chf(Number(i.einzelpreis) * Number(i.menge))}</td>
@@ -143,6 +146,7 @@ export function renderQuoteHtml({ quote, customer, property, items, settings: cf
       td { padding: 8px; border-bottom: 1px solid #e2e8f0; font-size: 11px; }
       .num { text-align: right; }
       .img-cell { width: 34px; padding: 6px 4px; }
+      .item-specs { font-size: 9.5px; line-height: 1.5; color: #64748b; margin-top: 3px; }
       .item-img { width: 28px; height: 28px; object-fit: cover; border-radius: 4px; display: block; }
       .totals { width: 260px; margin-left: auto; margin-top: 16px; }
       .totals div { display: flex; justify-content: space-between; padding: 4px 8px; font-size: 12px; }

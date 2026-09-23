@@ -16,6 +16,7 @@ export function DeviceFormModal({ device, onClose }: { device: Device | null; on
   const [lieferantId, setLieferantId] = useState(device?.lieferantId ? String(device.lieferantId) : "");
   const [mindestbestand, setMindestbestand] = useState(String(device?.mindestbestand ?? 0));
   const [notiz, setNotiz] = useState(device?.notiz ?? "");
+  const [spezifikationen, setSpezifikationen] = useState(device?.spezifikationen ?? "");
   const [error, setError] = useState<string | null>(null);
 
   const createDevice = useCreateDevice();
@@ -43,6 +44,7 @@ export function DeviceFormModal({ device, onClose }: { device: Device | null; on
       lieferantId: lieferantId ? Number(lieferantId) : undefined,
       mindestbestand: Number(mindestbestand),
       notiz,
+      spezifikationen,
     };
     try {
       if (device) {
@@ -164,7 +166,17 @@ export function DeviceFormModal({ device, onClose }: { device: Device | null; on
           />
         </div>
         <div className="field">
-          <label htmlFor="device-notiz">Notiz</label>
+          <label htmlFor="device-spezifikationen">Spezifikationen (im Angebot sichtbar)</label>
+          <textarea
+            id="device-spezifikationen"
+            rows={3}
+            value={spezifikationen}
+            onChange={(e) => setSpezifikationen(e.target.value)}
+            placeholder={"z.B. Kühlleistung 2.5 kW, Energieeffizienzklasse A+++, Schallpegel 19 dB(A)"}
+          />
+        </div>
+        <div className="field">
+          <label htmlFor="device-notiz">Notiz (intern)</label>
           <textarea id="device-notiz" rows={2} value={notiz} onChange={(e) => setNotiz(e.target.value)} />
         </div>
 

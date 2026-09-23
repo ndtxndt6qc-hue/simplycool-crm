@@ -23,6 +23,7 @@ const deviceSchema = z.object({
   lieferantId: z.number().int().optional(),
   mindestbestand: z.number().int().nonnegative().optional(),
   notiz: z.string().optional(),
+  spezifikationen: z.string().optional(),
   aktiv: z.boolean().optional(),
 });
 

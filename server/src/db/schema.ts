@@ -172,6 +172,7 @@ export const devices = pgTable("devices", {
   lagerbestand: integer("lagerbestand").notNull().default(0),
   mindestbestand: integer("mindestbestand").notNull().default(0),
   notiz: text("notiz"),
+  spezifikationen: text("spezifikationen"),
   aktiv: boolean("aktiv").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
