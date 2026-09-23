@@ -31,6 +31,41 @@ export const PAGE_TEXT_FIELDS: PageTextField[] = [
     default: "Wir melden uns innerhalb von 24 Stunden bei Ihnen.",
   },
 
+  // Terminbuchungsseite — Kalender auf V1 und V2
+  { id: "termin.intro.titel", group: "Terminbuchung", label: "Seitentitel", default: "Termin buchen" },
+  {
+    id: "termin.intro.text",
+    group: "Terminbuchung",
+    label: "Einleitungstext",
+    multiline: true,
+    default: "Wählen Sie einen freien Termin für ein unverbindliches Beratungsgespräch — direkt online, ohne Rückfrage.",
+  },
+  {
+    id: "termin.bestaetigt.titel",
+    group: "Terminbuchung",
+    label: "Bestätigung nach Buchung — Titel",
+    default: "Termin bestätigt!",
+  },
+  {
+    id: "termin.bestaetigt.text",
+    group: "Terminbuchung",
+    label: "Bestätigung nach Buchung — Text (nach Datum/Uhrzeit)",
+    multiline: true,
+    default: "Sie erhalten in Kürze eine Bestätigung mit Kalendereintrag per E-Mail.",
+  },
+  {
+    id: "termin.keine_termine_monat",
+    group: "Terminbuchung",
+    label: "Hinweis — keine Termine in diesem Monat",
+    default: "Aktuell sind in diesem Monat keine Termine verfügbar.",
+  },
+  {
+    id: "termin.keine_termine_tag",
+    group: "Terminbuchung",
+    label: "Hinweis — keine Termine an gewähltem Tag",
+    default: "Keine freien Termine an diesem Tag.",
+  },
+
   // Startseite — Hero
   {
     id: "home.hero.headline",

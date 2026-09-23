@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { usePublicBookingSlots, useCreateBooking } from "../../lib/publicApi";
 import { ApiError } from "../../lib/api";
+import { usePageTextMap, getText } from "../../lib/pageTexts";
 
 const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 const MONTHS = [
@@ -25,6 +26,7 @@ function getUtmSource(): string | undefined {
 }
 
 export function BookingCalendar() {
+  const texts = usePageTextMap();
   const [cursor, setCursor] = useState(() => {
     const d = new Date();
     return new Date(d.getFullYear(), d.getMonth(), 1);
@@ -99,7 +101,7 @@ export function BookingCalendar() {
         </div>
         {isLoading && <p className="public-booking-hint">Lädt verfügbare Termine…</p>}
         {!isLoading && !isPastMonth && Object.keys(slots ?? {}).length === 0 && (
-          <p className="public-booking-hint">Aktuell sind in diesem Monat keine Termine verfügbar.</p>
+          <p className="public-booking-hint">{getText(texts, "termin.keine_termine_monat")}</p>
         )}
       </div>
 
@@ -107,7 +109,7 @@ export function BookingCalendar() {
         <div className="public-card public-booking-slots">
           <h3 style={{ marginBottom: 12 }}>Uhrzeit am {selectedDate.split("-").reverse().join(".")}</h3>
           {daySlots.length === 0 ? (
-            <p className="public-booking-hint">Keine freien Termine an diesem Tag.</p>
+            <p className="public-booking-hint">{getText(texts, "termin.keine_termine_tag")}</p>
           ) : (
             <div className="public-booking-slot-grid">
               {daySlots.map((s) => (
@@ -153,6 +155,7 @@ function BookingForm({
   onBooked: () => void;
   onSlotTaken: () => void;
 }) {
+  const texts = usePageTextMap();
   const [name, setName] = useState("");
   const [telefon, setTelefon] = useState("");
   const [email, setEmail] = useState("");
@@ -220,10 +223,9 @@ function BookingForm({
     return (
       <div className="public-card public-booking-form">
         <div className="public-form-success">
-          <h3>Termin bestätigt!</h3>
+          <h3>{getText(texts, "termin.bestaetigt.titel")}</h3>
           <p>
-            {datum.split("-").reverse().join(".")}, {slot.start}–{slot.end} Uhr. Sie erhalten in Kürze eine
-            Bestätigung mit Kalendereintrag per E-Mail.
+            {datum.split("-").reverse().join(".")}, {slot.start}–{slot.end} Uhr. {getText(texts, "termin.bestaetigt.text")}
           </p>
         </div>
       </div>

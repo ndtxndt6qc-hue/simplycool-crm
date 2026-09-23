@@ -1,7 +1,9 @@
 import { Seo } from "../../public/components/Seo";
 import { BookingCalendar } from "../../public/components/BookingCalendar";
+import { usePageTextMap, getText } from "../../lib/pageTexts";
 
 export function TerminPageV2() {
+  const texts = usePageTextMap();
   return (
     <>
       <Seo
@@ -12,10 +14,8 @@ export function TerminPageV2() {
       <section className="pv2-hero" style={{ paddingBottom: 8 }}>
         <div className="pv2-hero-inner" style={{ paddingBottom: 40 }}>
           <div className="pv2-kicker">Termin buchen</div>
-          <h1>
-            Ihr Beratungstermin, <span className="pv2-accent">in 2 Minuten gebucht.</span>
-          </h1>
-          <p>Wählen Sie einen freien Termin — direkt online, ohne Rückfrage.</p>
+          <h1>{getText(texts, "termin.intro.titel")}</h1>
+          <p>{getText(texts, "termin.intro.text")}</p>
         </div>
       </section>
 
