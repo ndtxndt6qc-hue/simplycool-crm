@@ -16,6 +16,21 @@ export const PAGE_TEXT_FIELDS: PageTextField[] = [
   { id: "kontakt.email", group: "Kontaktdaten", label: "E-Mail-Adresse", default: "info@simply-cool.ch" },
   { id: "kontakt.einsatzgebiet", group: "Kontaktdaten", label: "Einsatzgebiet", default: "Rüfenach AG und Umgebung" },
 
+  // Bestätigung nach Formularversand — Kontaktformular auf V1 und V2
+  {
+    id: "kontakt.danke.titel",
+    group: "Kontaktdaten",
+    label: "Bestätigung nach Anfrage — Titel",
+    default: "Danke für Ihre Anfrage!",
+  },
+  {
+    id: "kontakt.danke.text",
+    group: "Kontaktdaten",
+    label: "Bestätigung nach Anfrage — Text",
+    multiline: true,
+    default: "Wir melden uns innerhalb von 24 Stunden bei Ihnen.",
+  },
+
   // Startseite — Hero
   {
     id: "home.hero.headline",

@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { api, ApiError } from "../../lib/api";
+import { usePageTextMap, getText } from "../../lib/pageTexts";
 
 function getUtmSource(): string | undefined {
   try {
@@ -10,6 +11,7 @@ function getUtmSource(): string | undefined {
 }
 
 export function ContactForm({ title = "Kostenlose Anfrage" }: { title?: string }) {
+  const texts = usePageTextMap();
   const [name, setName] = useState("");
   const [telefon, setTelefon] = useState("");
   const [email, setEmail] = useState("");
@@ -71,8 +73,8 @@ export function ContactForm({ title = "Kostenlose Anfrage" }: { title?: string }
     return (
       <div className="public-form">
         <div className="public-form-success">
-          <h3>Danke für Ihre Anfrage!</h3>
-          <p>Wir melden uns innerhalb von 24 Stunden bei Ihnen.</p>
+          <h3>{getText(texts, "kontakt.danke.titel")}</h3>
+          <p>{getText(texts, "kontakt.danke.text")}</p>
         </div>
       </div>
     );
