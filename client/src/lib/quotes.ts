@@ -30,6 +30,10 @@ export type Quote = {
   gueltigBis: string | null;
   mwstSatz: string;
   abklaerungDurch: AbklaerungDurch | null;
+  publicToken: string | null;
+  angenommenAm: string | null;
+  angenommenIp: string | null;
+  angenommenUserAgent: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -151,6 +155,12 @@ export function useSendQuote(quoteId: number) {
       qc.invalidateQueries({ queryKey: ["quotes", quoteId] });
       qc.invalidateQueries({ queryKey: ["quotes"] });
     },
+  });
+}
+
+export function useQuotePublicLink(quoteId: number) {
+  return useMutation({
+    mutationFn: () => api.get<{ token: string; url: string }>(`/quotes/${quoteId}/public-link`),
   });
 }
 

@@ -11,6 +11,7 @@ import { TerminPage } from "./public/pages/TerminPage";
 import { ImpressumPage } from "./public/pages/ImpressumPage";
 import { DatenschutzPage } from "./public/pages/DatenschutzPage";
 import { AgbPage } from "./public/pages/AgbPage";
+import { AngebotAnsichtPage } from "./public/pages/AngebotAnsichtPage";
 import { PublicLayoutV2 } from "./public-v2/components/PublicLayoutV2";
 import { HomePageV2 } from "./public-v2/pages/HomePageV2";
 import { LeistungenPageV2 } from "./public-v2/pages/LeistungenPageV2";
@@ -47,6 +48,10 @@ export default function App() {
         <Route path="datenschutz" element={<DatenschutzPage />} />
         <Route path="agb" element={<AgbPage />} />
       </Route>
+
+      {/* Standalone, ohne Marketing-Header/Footer — Kunde erreicht das über den personalisierten
+          Link im Angebots-Mail, nicht über die normale Seitennavigation. */}
+      <Route path="angebot/:token" element={<AngebotAnsichtPage />} />
 
       <Route
         path="/app/*"

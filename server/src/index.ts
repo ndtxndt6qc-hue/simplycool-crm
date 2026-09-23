@@ -26,6 +26,11 @@ import { requireAuth } from "./middleware/requireAuth.js";
 const app = express();
 const PgSession = connectPgSimple(session);
 
+// Läuft im Deployment hinter Caddy als Reverse-Proxy — ohne das würde req.ip die interne
+// Proxy-Adresse statt der echten Client-IP liefern (relevant u.a. für die Nachweispflicht bei
+// der Online-Angebotsbestätigung).
+app.set("trust proxy", 1);
+
 app.use(
   cors({
     origin: process.env.CLIENT_ORIGIN ?? "http://localhost:5173",

@@ -10,11 +10,15 @@ import {
   bookingAvailabilityRules,
   bookingBlockedSlots,
   bookings,
+  customers,
+  devices,
   leads,
   orderItems,
   orderReferenzFotos,
   orders,
   properties,
+  quoteItems,
+  quotes,
 } from "../db/schema.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import type { LeadQuelle } from "@klimainstall/shared";
@@ -23,6 +27,7 @@ import { sendMail } from "../services/mailer.js";
 import { getPageTextOverrides } from "../services/pageTexts.js";
 import { computeAvailableSlots, zurichNow } from "../services/booking.js";
 import { buildIcsEvent } from "../services/ics.js";
+import { renderQuotePdf } from "../pdf/quotePdf.js";
 
 export const publicRouter = Router();
 
@@ -425,5 +430,180 @@ publicRouter.post(
     }
 
     res.status(201).json({ ok: true, datum, startzeit, endzeit });
+  })
+);
+
+async function loadPublicQuote(token: string) {
+  const [row] = await db
+    .select({ quote: quotes, customer: customers, property: properties })
+    .from(quotes)
+    .innerJoin(customers, eq(quotes.customerId, customers.id))
+    .innerJoin(properties, eq(quotes.propertyId, properties.id))
+    .where(eq(quotes.publicToken, token));
+  if (!row) return null;
+
+  const rawItems = await db.select().from(quoteItems).where(eq(quoteItems.quoteId, row.quote.id)).orderBy(quoteItems.sortOrder);
+  const deviceIds = [...new Set(rawItems.filter((i) => i.deviceId).map((i) => i.deviceId!))];
+  const deviceRows = deviceIds.length
+    ? await db
+        .select({ id: devices.id, bildPfad: devices.bildPfad, spezifikationen: devices.spezifikationen })
+        .from(devices)
+        .where(inArray(devices.id, deviceIds))
+    : [];
+  const bildById = new Map(deviceRows.map((d) => [d.id, d.bildPfad]));
+  const specsById = new Map(deviceRows.map((d) => [d.id, d.spezifikationen]));
+  const items = rawItems.map((i) => ({
+    ...i,
+    deviceBildPfad: i.deviceId ? bildById.get(i.deviceId) ?? null : null,
+    deviceSpezifikationen: i.deviceId ? specsById.get(i.deviceId) ?? null : null,
+  }));
+  const settings = await getOrCreateSettings();
+
+  return { quote: row.quote, customer: row.customer, property: row.property, items, settings };
+}
+
+publicRouter.get(
+  "/quote/:token",
+  asyncHandler(async (req, res) => {
+    const data = await loadPublicQuote(req.params.token);
+    if (!data) {
+      res.status(404).json({ error: "Angebot nicht gefunden." });
+      return;
+    }
+    const { quote, customer, property, items, settings } = data;
+    const mwstSatz = Number(quote.mwstSatz);
+    const verbindliche = items.filter((i) => !i.optional);
+    const optionale = items.filter((i) => i.optional);
+    const netto = verbindliche.reduce((acc, i) => acc + Number(i.einzelpreis) * Number(i.menge), 0);
+    const nettoOptional = optionale.reduce((acc, i) => acc + Number(i.einzelpreis) * Number(i.menge), 0);
+    const mwstBetrag = netto * (mwstSatz / 100);
+
+    res.json({
+      angebotsnummer: quote.angebotsnummer,
+      datum: quote.datum,
+      gueltigBis: quote.gueltigBis,
+      status: quote.status,
+      angenommenAm: quote.angenommenAm,
+      firmenname: settings.firmenname,
+      kunde: {
+        name: [customer.firma, [customer.vorname, customer.nachname].filter(Boolean).join(" ")].filter(Boolean).join(" — "),
+        strasse: customer.strasse,
+        plz: customer.plz,
+        ort: customer.ort,
+      },
+      installationsort: { strasse: property.strasse, plz: property.plz, ort: property.ort },
+      items: items.map((i) => ({
+        id: i.id,
+        typ: i.typ,
+        beschreibung: i.beschreibung,
+        menge: i.menge,
+        einheit: i.einheit,
+        einzelpreis: i.einzelpreis,
+        total: (Number(i.einzelpreis) * Number(i.menge)).toFixed(2),
+        optional: i.optional,
+        spezifikationen: i.deviceSpezifikationen,
+      })),
+      mwstSatz,
+      summeNetto: netto.toFixed(2),
+      mwstBetrag: mwstBetrag.toFixed(2),
+      summeTotal: (netto + mwstBetrag).toFixed(2),
+      summeOptional: nettoOptional.toFixed(2),
+    });
+  })
+);
+
+const acceptSchema = z.object({ agbAkzeptiert: z.literal(true) });
+
+publicRouter.post(
+  "/quote/:token/accept",
+  leadRateLimiter,
+  asyncHandler(async (req, res) => {
+    const parsed = acceptSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: "Bitte AGB akzeptieren." });
+      return;
+    }
+
+    const data = await loadPublicQuote(req.params.token);
+    if (!data) {
+      res.status(404).json({ error: "Angebot nicht gefunden." });
+      return;
+    }
+    const { quote } = data;
+
+    if (quote.status === "angenommen") {
+      res.json({ ok: true, alreadyAccepted: true, angenommenAm: quote.angenommenAm });
+      return;
+    }
+    if (quote.status === "abgelehnt") {
+      res.status(400).json({ error: "Dieses Angebot wurde bereits abgelehnt." });
+      return;
+    }
+
+    const angenommenAm = new Date();
+    const [updated] = await db
+      .update(quotes)
+      .set({
+        status: "angenommen",
+        angenommenAm,
+        angenommenIp: req.ip ?? null,
+        angenommenUserAgent: req.get("user-agent") ?? null,
+        updatedAt: angenommenAm,
+      })
+      .where(eq(quotes.id, quote.id))
+      .returning();
+
+    if (updated.leadId) {
+      await db.update(leads).set({ status: "gewonnen", updatedAt: new Date() }).where(eq(leads.id, updated.leadId));
+    }
+
+    try {
+      const settings = await getOrCreateSettings();
+      if (settings.smtpHost && settings.smtpUser) {
+        const pdfBuffer = await renderQuotePdf({
+          quote: updated,
+          customer: data.customer,
+          property: data.property,
+          items: data.items,
+          settings,
+        });
+        const attachments = [{ filename: `${updated.angebotsnummer}.pdf`, content: pdfBuffer }];
+        const zeitpunkt = new Intl.DateTimeFormat("de-CH", { dateStyle: "medium", timeStyle: "short" }).format(angenommenAm);
+
+        if (data.customer.email) {
+          await sendMail(settings, {
+            to: data.customer.email,
+            subject: `Bestätigung: Angebot ${updated.angebotsnummer} angenommen`,
+            text: [
+              `Guten Tag ${data.customer.vorname ?? ""} ${data.customer.nachname}`,
+              "",
+              `Vielen Dank — Sie haben das Angebot ${updated.angebotsnummer} am ${zeitpunkt} Uhr online bestätigt.`,
+              "Das angenommene Angebot finden Sie im Anhang. Wir melden uns in Kürze für die Terminvereinbarung.",
+              "",
+              `Freundliche Grüsse\n${settings.firmenname}`,
+            ].join("\n"),
+            attachments,
+          });
+        }
+        if (settings.adminBenachrichtigungEmail) {
+          await sendMail(settings, {
+            to: settings.adminBenachrichtigungEmail,
+            subject: `Angebot online angenommen: ${updated.angebotsnummer}`,
+            text: [
+              `Das Angebot ${updated.angebotsnummer} wurde online bestätigt.`,
+              "",
+              `Zeitpunkt: ${zeitpunkt} Uhr`,
+              `IP-Adresse: ${updated.angenommenIp ?? "—"}`,
+              `Kunde: ${data.customer.vorname ?? ""} ${data.customer.nachname}`.trim(),
+            ].join("\n"),
+            attachments,
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Bestätigungsmail für Online-Annahme konnte nicht gesendet werden:", err);
+    }
+
+    res.json({ ok: true, alreadyAccepted: false, angenommenAm });
   })
 );

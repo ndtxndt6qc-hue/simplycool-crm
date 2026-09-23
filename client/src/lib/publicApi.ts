@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 
 export type Branding = { firmenname: string; hatLogo: boolean };
@@ -74,5 +74,57 @@ export function useCreateBooking() {
   return useMutation({
     mutationFn: (input: CreateBookingInput) =>
       api.post<{ ok: true; datum: string; startzeit: string; endzeit: string }>("/public/booking", input),
+  });
+}
+
+export type PublicQuoteItem = {
+  id: number;
+  typ: string;
+  beschreibung: string;
+  menge: string;
+  einheit: string | null;
+  einzelpreis: string;
+  total: string;
+  optional: boolean;
+  spezifikationen: string | null;
+};
+
+export type PublicQuote = {
+  angebotsnummer: string;
+  datum: string;
+  gueltigBis: string | null;
+  status: "entwurf" | "versendet" | "angenommen" | "abgelehnt" | "abgelaufen";
+  angenommenAm: string | null;
+  firmenname: string;
+  kunde: { name: string; strasse: string; plz: string; ort: string };
+  installationsort: { strasse: string; plz: string; ort: string };
+  items: PublicQuoteItem[];
+  mwstSatz: number;
+  summeNetto: string;
+  mwstBetrag: string;
+  summeTotal: string;
+  summeOptional: string;
+};
+
+export function usePublicQuote(token: string) {
+  return useQuery({
+    queryKey: ["public", "quote", token],
+    queryFn: async () => {
+      const res = await fetch(`/api/public/quote/${token}`);
+      if (!res.ok) throw new Error("Angebot nicht gefunden.");
+      return res.json() as Promise<PublicQuote>;
+    },
+    enabled: Boolean(token),
+  });
+}
+
+export function useAcceptPublicQuote(token: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      api.post<{ ok: true; alreadyAccepted: boolean; angenommenAm: string }>(`/public/quote/${token}/accept`, {
+        agbAkzeptiert: true,
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["public", "quote", token] }),
   });
 }

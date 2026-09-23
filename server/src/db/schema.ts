@@ -225,6 +225,15 @@ export const quotes = pgTable("quotes", {
   }),
   gemeindeAbklaerungVorgeschlagen: boolean("gemeinde_abklaerung_vorgeschlagen").notNull().default(false),
   abklaerungDurch: abklaerungDurchEnum("abklaerung_durch"),
+  // Öffentlicher, nicht erratbarer Zugriffstoken für die Online-Ansicht/-Bestätigung des
+  // Angebots (client: /angebot/:token). Wird lazy erzeugt (ensurePublicToken), nicht bei jedem
+  // Angebot zwingend vorhanden — v.a. historische, vor diesem Feature erstellte Angebote.
+  publicToken: varchar("public_token", { length: 64 }).unique(),
+  // Nachweis der Online-Bestätigung (Rechtssicherheit: Zeitpunkt + IP + Browser dokumentieren,
+  // wer wann welchem Angebot zugestimmt hat).
+  angenommenAm: timestamp("angenommen_am"),
+  angenommenIp: varchar("angenommen_ip", { length: 64 }),
+  angenommenUserAgent: text("angenommen_user_agent"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

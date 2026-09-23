@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
+import crypto from "node:crypto";
 import { eq, inArray, sql } from "drizzle-orm";
 import { db } from "../db/client.js";
 import {
@@ -58,6 +59,20 @@ async function requireEditableQuote(quoteId: number) {
   if (!quote) return { quote: null, locked: false };
   const locked = await isQuoteLocked(quote);
   return { quote, locked };
+}
+
+// Liefert den öffentlichen Zugriffstoken für die Online-Ansicht/-Bestätigung — erzeugt ihn
+// bei Bedarf nachträglich (für Angebote, die vor diesem Feature erstellt wurden).
+async function ensurePublicToken(quote: { id: number; publicToken: string | null }): Promise<string> {
+  if (quote.publicToken) return quote.publicToken;
+  const token = crypto.randomUUID();
+  await db.update(quotes).set({ publicToken: token }).where(eq(quotes.id, quote.id));
+  return token;
+}
+
+function publicQuoteUrl(token: string): string {
+  const origin = process.env.CLIENT_ORIGIN ?? "http://localhost:5173";
+  return `${origin}/angebot/${token}`;
 }
 
 async function getQuoteTotals(quoteId: number) {
@@ -147,6 +162,20 @@ quotesRouter.get(
       summeOptional,
       locked,
     });
+  })
+);
+
+quotesRouter.get(
+  "/:id/public-link",
+  asyncHandler(async (req, res) => {
+    const quoteId = Number(req.params.id);
+    const [quote] = await db.select().from(quotes).where(eq(quotes.id, quoteId));
+    if (!quote) {
+      res.status(404).json({ error: "Angebot nicht gefunden." });
+      return;
+    }
+    const token = await ensurePublicToken(quote);
+    res.json({ token, url: publicQuoteUrl(token) });
   })
 );
 
@@ -277,6 +306,7 @@ quotesRouter.post(
         ...parsed.data,
         angebotsnummer: "TEMP",
         mwstSatz: settings.defaultMwstSatz,
+        publicToken: crypto.randomUUID(),
       })
       .returning();
 
@@ -563,12 +593,15 @@ quotesRouter.post(
     }
 
     const pdfBuffer = await renderQuotePdf(data);
+    const token = await ensurePublicToken(data.quote);
+    const link = publicQuoteUrl(token);
+    const bodyText =
+      parsed.data.message ||
+      `Guten Tag ${data.customer.vorname ?? ""} ${data.customer.nachname}\n\nAnbei erhalten Sie unser Angebot ${data.quote.angebotsnummer}.\n\nFreundliche Grüsse\n${data.settings.firmenname}`;
     await sendMail(data.settings, {
       to: recipient,
       subject: `Ihr Angebot ${data.quote.angebotsnummer}`,
-      text:
-        parsed.data.message ||
-        `Guten Tag ${data.customer.vorname ?? ""} ${data.customer.nachname}\n\nAnbei erhalten Sie unser Angebot ${data.quote.angebotsnummer}.\n\nFreundliche Grüsse\n${data.settings.firmenname}`,
+      text: `${bodyText}\n\nSie können das Angebot auch direkt online ansehen und bestätigen:\n${link}`,
       attachments: [{ filename: `${data.quote.angebotsnummer}.pdf`, content: pdfBuffer }],
     });
 

@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { QUOTE_STATUS_LABELS } from "../lib/labels";
 import { formatChf } from "../lib/format";
 import { QUOTE_STATUS, type QuoteStatus } from "@klimainstall/shared";
-import { useDeleteQuote, useQuote, useUpdateQuote } from "../lib/quotes";
+import { useDeleteQuote, useQuote, useQuotePublicLink, useUpdateQuote } from "../lib/quotes";
 import { useCreateOrderFromQuote, useOrderByQuote } from "../lib/orders";
 import { QuoteItemForm } from "../components/QuoteItemForm";
 import { QuoteItemRow } from "../components/QuoteItemRow";
@@ -22,6 +22,15 @@ export function QuoteDetailPage() {
   const createOrder = useCreateOrderFromQuote();
   const [sending, setSending] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
+  const getPublicLink = useQuotePublicLink(quoteId);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  async function handleCopyLink() {
+    setLinkCopied(false);
+    const { url } = await getPublicLink.mutateAsync();
+    await navigator.clipboard.writeText(url);
+    setLinkCopied(true);
+  }
 
   async function handleCreateOrder() {
     setOrderError(null);
@@ -58,6 +67,13 @@ export function QuoteDetailPage() {
           {quote.status === "angenommen"
             ? "Nach Annahme durch den Kunden können Positionen nicht mehr bearbeitet werden."
             : "Positionen können nach dem Versand nicht mehr bearbeitet werden. Diese Sperre kann in den Einstellungen deaktiviert werden."}
+        </div>
+      )}
+
+      {quote.status === "angenommen" && quote.angenommenAm && (
+        <div className="card" style={{ marginBottom: 20, fontSize: 13, color: "var(--color-text-muted)" }}>
+          Online bestätigt am {new Intl.DateTimeFormat("de-CH", { dateStyle: "medium", timeStyle: "short" }).format(new Date(quote.angenommenAm))} Uhr
+          {quote.angenommenIp ? ` von IP ${quote.angenommenIp}` : ""} — als Nachweis der Annahme gespeichert.
         </div>
       )}
 
@@ -109,6 +125,9 @@ export function QuoteDetailPage() {
           <a className="btn btn-secondary" href={`/api/quotes/${quote.id}/pdf`} target="_blank" rel="noreferrer">
             PDF ansehen
           </a>
+          <button className="btn btn-secondary" onClick={handleCopyLink} disabled={getPublicLink.isPending}>
+            {linkCopied ? "Link kopiert ✓" : "Link kopieren"}
+          </button>
           <button className="btn btn-primary" onClick={() => setSending(true)}>
             Per E-Mail senden
           </button>
