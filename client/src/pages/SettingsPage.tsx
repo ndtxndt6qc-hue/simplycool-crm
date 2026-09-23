@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { useSettings, useUpdateSettings, useUploadLogo, useUploadVorlage } from "../lib/settings";
+import { useSettings, useUpdateSettings, useUploadLogo, useUploadVorlage, useTestSmtp } from "../lib/settings";
 import { UsersSection } from "../components/UsersSection";
 import { ApiError } from "../lib/api";
 
@@ -9,6 +9,7 @@ export function SettingsPage() {
   const uploadLogo = useUploadLogo();
   const uploadAbnahmeVorlage = useUploadVorlage("abnahmeprotokoll");
   const uploadInstallVorlage = useUploadVorlage("installationsanweisung");
+  const testSmtp = useTestSmtp();
 
   const [firmenname, setFirmenname] = useState("");
   const [strasse, setStrasse] = useState("");
@@ -29,6 +30,7 @@ export function SettingsPage() {
   const [angebotSperreNachVersand, setAngebotSperreNachVersand] = useState(true);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [smtpTestResult, setSmtpTestResult] = useState<{ ok: boolean; message: string } | null>(null);
 
   useEffect(() => {
     if (!settings) return;
@@ -78,6 +80,31 @@ export function SettingsPage() {
       setSaved(true);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Speichern fehlgeschlagen.");
+    }
+  }
+
+  async function handleTestSmtp() {
+    setSmtpTestResult(null);
+    if (!smtpHost.trim() || !smtpUser.trim()) {
+      setSmtpTestResult({ ok: false, message: "Bitte mindestens SMTP-Host und Benutzer eintragen." });
+      return;
+    }
+    try {
+      const result = await testSmtp.mutateAsync({
+        smtpHost,
+        smtpPort: smtpPort ? Number(smtpPort) : 587,
+        smtpUser,
+        adminBenachrichtigungEmail,
+        ...(smtpPass ? { smtpPassEncrypted: smtpPass } : {}),
+      });
+      setSmtpTestResult({
+        ok: true,
+        message: result.testMailGesendetAn
+          ? `Verbindung erfolgreich — Test-E-Mail an ${result.testMailGesendetAn} gesendet.`
+          : "Verbindung erfolgreich. Keine Test-E-Mail gesendet, da keine Admin-E-Mail hinterlegt ist.",
+      });
+    } catch (err) {
+      setSmtpTestResult({ ok: false, message: err instanceof ApiError ? err.message : "Test fehlgeschlagen." });
     }
   }
 
@@ -256,6 +283,25 @@ export function SettingsPage() {
               Adresse eine Benachrichtigung gesendet (nur wenn SMTP oben konfiguriert ist).
             </p>
           </div>
+
+          <button type="button" className="btn btn-secondary" onClick={handleTestSmtp} disabled={testSmtp.isPending}>
+            {testSmtp.isPending ? "Testet…" : "Verbindung testen"}
+          </button>
+          {smtpTestResult && (
+            <p
+              style={{
+                fontSize: 12,
+                marginTop: 8,
+                color: smtpTestResult.ok ? "var(--color-success, #16a34a)" : "var(--color-danger)",
+              }}
+            >
+              {smtpTestResult.message}
+            </p>
+          )}
+          <p style={{ fontSize: 11, color: "var(--color-text-muted)", margin: "8px 0 0" }}>
+            Testet die oben eingetragenen Werte direkt (auch ungespeichert) — prüft Verbindung/Login und sendet,
+            falls eine Admin-E-Mail hinterlegt ist, eine Test-E-Mail dorthin.
+          </p>
         </div>
 
         <div className="card" style={{ marginBottom: 24 }}>

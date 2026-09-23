@@ -4,16 +4,20 @@ import type { settings } from "../db/schema.js";
 
 type Settings = InferSelectModel<typeof settings>;
 
-export async function sendMail(
-  cfg: Settings,
-  message: { to: string; subject: string; text: string; attachments: { filename: string; content: Buffer }[] }
-) {
-  const transporter = nodemailer.createTransport({
+function createTransporter(cfg: Settings) {
+  return nodemailer.createTransport({
     host: cfg.smtpHost!,
     port: cfg.smtpPort ?? 587,
     secure: cfg.smtpPort === 465,
     auth: cfg.smtpUser ? { user: cfg.smtpUser, pass: cfg.smtpPassEncrypted ?? "" } : undefined,
   });
+}
+
+export async function sendMail(
+  cfg: Settings,
+  message: { to: string; subject: string; text: string; attachments: { filename: string; content: Buffer }[] }
+) {
+  const transporter = createTransporter(cfg);
 
   await transporter.sendMail({
     from: `"${cfg.firmenname || "SimplyCool"}" <${cfg.smtpUser}>`,
@@ -22,4 +26,10 @@ export async function sendMail(
     text: message.text,
     attachments: message.attachments,
   });
+}
+
+// Prüft nur Verbindung + Login (EHLO/STARTTLS/AUTH) — sendet keine E-Mail. Wirft bei Fehler.
+export async function verifySmtpConnection(cfg: Settings): Promise<void> {
+  const transporter = createTransporter(cfg);
+  await transporter.verify();
 }

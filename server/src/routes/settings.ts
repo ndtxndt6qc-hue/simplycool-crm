@@ -9,6 +9,7 @@ import { db } from "../db/client.js";
 import { settings } from "../db/schema.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { getOrCreateSettings } from "../services/settings.js";
+import { sendMail, verifySmtpConnection } from "../services/mailer.js";
 
 export const settingsRouter = Router();
 
@@ -80,6 +81,71 @@ settingsRouter.patch(
       .returning();
     const { smtpPassEncrypted: _hidden, ...safe } = updated;
     res.json({ ...safe, smtpPassSet: Boolean(updated.smtpPassEncrypted) });
+  })
+);
+
+const smtpTestSchema = z.object({
+  smtpHost: z.string().min(1, "SMTP-Host ist erforderlich."),
+  smtpPort: z.number().int(),
+  smtpUser: z.string().min(1, "Benutzer ist erforderlich."),
+  smtpPassEncrypted: z.string().optional(), // leer = gespeichertes Passwort verwenden
+  adminBenachrichtigungEmail: z.string().email().optional().or(z.literal("")),
+});
+
+settingsRouter.post(
+  "/smtp-test",
+  asyncHandler(async (req, res) => {
+    const parsed = smtpTestSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Ungültige Eingabe." });
+      return;
+    }
+
+    const current = await getOrCreateSettings();
+    const smtpPassEncrypted = parsed.data.smtpPassEncrypted || current.smtpPassEncrypted;
+    if (!smtpPassEncrypted) {
+      res.status(400).json({ error: "Kein Passwort hinterlegt. Bitte eintragen (auch ohne zu speichern) und erneut testen." });
+      return;
+    }
+
+    const testCfg = {
+      ...current,
+      smtpHost: parsed.data.smtpHost,
+      smtpPort: parsed.data.smtpPort,
+      smtpUser: parsed.data.smtpUser,
+      smtpPassEncrypted,
+    };
+
+    try {
+      await verifySmtpConnection(testCfg);
+    } catch (err) {
+      res.status(400).json({ error: `Verbindung fehlgeschlagen: ${err instanceof Error ? err.message : "Unbekannter Fehler."}` });
+      return;
+    }
+
+    const testEmpfaenger = parsed.data.adminBenachrichtigungEmail || current.adminBenachrichtigungEmail;
+    if (!testEmpfaenger) {
+      res.json({ ok: true, testMailGesendetAn: null });
+      return;
+    }
+
+    try {
+      await sendMail(testCfg, {
+        to: testEmpfaenger,
+        subject: "Test-E-Mail — SimplyCool SMTP-Konfiguration",
+        text: "Diese Test-E-Mail bestätigt, dass der E-Mail-Versand korrekt konfiguriert ist.",
+        attachments: [],
+      });
+    } catch (err) {
+      res.status(400).json({
+        error: `Verbindung erfolgreich, aber Test-E-Mail konnte nicht gesendet werden: ${
+          err instanceof Error ? err.message : "Unbekannter Fehler."
+        }`,
+      });
+      return;
+    }
+
+    res.json({ ok: true, testMailGesendetAn: testEmpfaenger });
   })
 );
 

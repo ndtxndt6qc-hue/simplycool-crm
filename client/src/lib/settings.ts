@@ -60,6 +60,20 @@ export function useUpdateSettings() {
   });
 }
 
+export type SmtpTestInput = {
+  smtpHost: string;
+  smtpPort: number;
+  smtpUser: string;
+  smtpPassEncrypted?: string;
+  adminBenachrichtigungEmail?: string;
+};
+
+export function useTestSmtp() {
+  return useMutation({
+    mutationFn: (input: SmtpTestInput) => api.post<{ ok: true; testMailGesendetAn: string | null }>("/settings/smtp-test", input),
+  });
+}
+
 export function useUploadLogo() {
   const qc = useQueryClient();
   return useMutation({
