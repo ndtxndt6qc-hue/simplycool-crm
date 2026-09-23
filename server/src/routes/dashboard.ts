@@ -1,9 +1,19 @@
 import { Router } from "express";
 import { db } from "../db/client.js";
-import { invoiceItems, invoices, orders, payments, quoteItems, quotes } from "../db/schema.js";
+import { bookings, customers, invoiceItems, invoices, leads, orders, payments, properties, quoteItems, quotes } from "../db/schema.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { zurichNow } from "../services/booking.js";
 
 export const dashboardRouter = Router();
+
+// Datum (YYYY-MM-DD) in Europe/Zurich, unabhängig von der Server-Zeitzone — für den
+// Tagesvergleich in der "Heute"-Übersicht (installationTermin/bohrTermin sind Timestamps).
+function zurichDateKey(value: Date | string | null): string | null {
+  if (!value) return null;
+  const fmt = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Zurich", year: "numeric", month: "2-digit", day: "2-digit" });
+  const parts = Object.fromEntries(fmt.formatToParts(new Date(value)).map((p) => [p.type, p.value]));
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
 
 function monthKey(date: string | Date) {
   const d = new Date(date);
@@ -19,6 +29,13 @@ dashboardRouter.get(
     const allInvoices = await db.select().from(invoices);
     const allInvoiceItems = await db.select().from(invoiceItems);
     const allPayments = await db.select().from(payments);
+    const allCustomers = await db.select().from(customers);
+    const allProperties = await db.select().from(properties);
+    const allLeads = await db.select().from(leads);
+    const allBookings = await db.select().from(bookings);
+
+    const customerById = new Map(allCustomers.map((c) => [c.id, c]));
+    const propertyById = new Map(allProperties.map((p) => [p.id, p]));
 
     const itemsByQuote = new Map<number, typeof allQuoteItems>();
     for (const item of allQuoteItems) {
@@ -99,12 +116,89 @@ dashboardRouter.get(
       months.push({ monat: key, ...entry });
     }
 
+    // "Heute" — Tagesübersicht, rein lesend, kein automatischer Mailversand.
+    const heuteDatum = zurichNow().datum;
+    const in3Tagen = new Date(`${heuteDatum}T00:00:00Z`);
+    in3Tagen.setUTCDate(in3Tagen.getUTCDate() + 3);
+    const in3TagenDatum = in3Tagen.toISOString().slice(0, 10);
+    const vor48h = new Date(Date.now() - 48 * 60 * 60 * 1000);
+
+    function kundenName(customerId: number): string {
+      const c = customerById.get(customerId);
+      if (!c) return "";
+      return [c.firma, [c.vorname, c.nachname].filter(Boolean).join(" ")].filter(Boolean).join(" — ");
+    }
+
+    const installationenHeute = allOrders
+      .filter((o) => zurichDateKey(o.installationTermin) === heuteDatum)
+      .map((o) => ({
+        orderId: o.id,
+        auftragsnummer: o.auftragsnummer,
+        art: "installation" as const,
+        uhrzeit: o.installationTermin,
+        kunde: kundenName(o.customerId),
+        ort: propertyById.get(o.propertyId)?.ort ?? "",
+      }));
+    const bohrterminHeute = allOrders
+      .filter((o) => zurichDateKey(o.bohrTermin) === heuteDatum && zurichDateKey(o.bohrTermin) !== zurichDateKey(o.installationTermin))
+      .map((o) => ({
+        orderId: o.id,
+        auftragsnummer: o.auftragsnummer,
+        art: "kernbohrung" as const,
+        uhrzeit: o.bohrTermin,
+        kunde: kundenName(o.customerId),
+        ort: propertyById.get(o.propertyId)?.ort ?? "",
+      }));
+
+    const beratungsTermineHeute = allBookings
+      .filter((b) => b.datum === heuteDatum && b.status === "bestaetigt")
+      .map((b) => ({ bookingId: b.id, startzeit: b.startzeit, endzeit: b.endzeit, name: b.name, ort: b.ort }))
+      .sort((a, b) => a.startzeit.localeCompare(b.startzeit));
+
+    const angeboteBaldAblaufend = allQuotes
+      .filter((q) => (q.status === "entwurf" || q.status === "versendet") && q.gueltigBis && q.gueltigBis <= in3TagenDatum)
+      .map((q) => ({
+        quoteId: q.id,
+        angebotsnummer: q.angebotsnummer,
+        gueltigBis: q.gueltigBis,
+        abgelaufen: q.gueltigBis! < heuteDatum,
+        kunde: kundenName(q.customerId),
+      }));
+
+    const leadsOhneKontakt = allLeads
+      .filter((l) => l.status === "neu" && new Date(l.createdAt) < vor48h)
+      .map((l) => ({ leadId: l.id, name: l.name, ort: l.ort, telefon: l.telefon, email: l.email, seit: l.createdAt }));
+
+    const ueberfaelligeRechnungen = allInvoices
+      .filter((inv) => inv.status !== "storniert" && inv.status !== "bezahlt" && inv.faelligkeitsdatum < heuteDatum)
+      .map((inv) => {
+        const total = invoiceTotal(inv);
+        const bezahlt = paymentsByInvoice.get(inv.id) ?? 0;
+        const order = orderById.get(inv.orderId);
+        return {
+          invoiceId: inv.id,
+          rechnungsnummer: inv.rechnungsnummer,
+          faelligkeitsdatum: inv.faelligkeitsdatum,
+          offenerBetrag: total - bezahlt,
+          kunde: order ? kundenName(order.customerId) : "",
+        };
+      })
+      .filter((r) => r.offenerBetrag > 0.01)
+      .sort((a, b) => a.faelligkeitsdatum.localeCompare(b.faelligkeitsdatum));
+
     res.json({
       offeneAngebote: { anzahl: offeneAngebote.length, volumen: offeneAngeboteVolumen },
       laufendeAuftraege,
       offeneRechnungen: { anzahl: offeneRechnungenAnzahl, volumen: offeneRechnungenVolumen },
       durchschnittlicheMargeProAuftrag: margeCount > 0 ? margeSumme / margeCount : 0,
       umsatzProMonat: months,
+      heute: {
+        termine: [...installationenHeute, ...bohrterminHeute].sort((a, b) => (a.uhrzeit && b.uhrzeit ? +new Date(a.uhrzeit) - +new Date(b.uhrzeit) : 0)),
+        beratungstermine: beratungsTermineHeute,
+        angeboteBaldAblaufend,
+        leadsOhneKontakt,
+        ueberfaelligeRechnungen,
+      },
     });
   })
 );
