@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { to: "/leistungen", label: "Leistungen" },
   { to: "/referenzen", label: "Referenzen" },
   { to: "/ueber-uns", label: "Über uns" },
+  { to: "/termin", label: "Termin buchen" },
   { to: "/kontakt", label: "Kontakt" },
 ];
 

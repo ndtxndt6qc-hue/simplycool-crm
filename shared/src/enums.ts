@@ -83,3 +83,16 @@ export type RabattTyp = (typeof RABATT_TYPEN)[number];
 
 export const ORDER_REFERENZ_FOTO_TYPEN = ["vorher", "nachher"] as const;
 export type OrderReferenzFotoTyp = (typeof ORDER_REFERENZ_FOTO_TYPEN)[number];
+
+export const BOOKING_STATUS = ["bestaetigt", "storniert"] as const;
+export type BookingStatus = (typeof BOOKING_STATUS)[number];
+
+export const WOCHENTAGE = [
+  { value: 1, label: "Montag" },
+  { value: 2, label: "Dienstag" },
+  { value: 3, label: "Mittwoch" },
+  { value: 4, label: "Donnerstag" },
+  { value: 5, label: "Freitag" },
+  { value: 6, label: "Samstag" },
+  { value: 0, label: "Sonntag" },
+] as const;

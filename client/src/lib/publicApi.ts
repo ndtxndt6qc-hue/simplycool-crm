@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { api } from "./api";
 
 export type Branding = { firmenname: string; hatLogo: boolean };
 
@@ -34,5 +35,44 @@ export function usePublicReferenzen(limit?: number) {
       return res.json() as Promise<PublicReferenz[]>;
     },
     staleTime: 60 * 1000,
+  });
+}
+
+export type PublicSlot = { start: string; end: string };
+export type PublicSlots = Record<string, PublicSlot[]>; // Key: "YYYY-MM-DD"
+
+export function usePublicBookingSlots(von?: string, bis?: string) {
+  return useQuery({
+    queryKey: ["public", "booking-slots", von, bis],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (von) params.set("von", von);
+      if (bis) params.set("bis", bis);
+      const qs = params.toString();
+      const res = await fetch(`/api/public/booking/slots${qs ? `?${qs}` : ""}`);
+      if (!res.ok) throw new Error("Termine konnten nicht geladen werden.");
+      return res.json() as Promise<PublicSlots>;
+    },
+    staleTime: 30 * 1000,
+  });
+}
+
+export type CreateBookingInput = {
+  name: string;
+  telefon?: string;
+  email?: string;
+  plz: string;
+  ort: string;
+  nachricht?: string;
+  datum: string;
+  startzeit: string;
+  quelle?: string;
+  firma?: string; // Honeypot
+};
+
+export function useCreateBooking() {
+  return useMutation({
+    mutationFn: (input: CreateBookingInput) =>
+      api.post<{ ok: true; datum: string; startzeit: string; endzeit: string }>("/public/booking", input),
   });
 }

@@ -16,6 +16,7 @@ import { InvoiceDetailPage } from "./pages/InvoiceDetailPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { GemeindeAnforderungenPage } from "./pages/GemeindeAnforderungenPage";
 import { PageTextsPage } from "./pages/PageTextsPage";
+import { BookingPage } from "./pages/BookingPage";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -58,6 +59,7 @@ export function InternalApp() {
         <Route path="rechnungen/:id" element={<InvoiceDetailPage />} />
         <Route path="gemeinde-anforderungen" element={<GemeindeAnforderungenPage />} />
         <Route path="webseite-texte" element={<PageTextsPage />} />
+        <Route path="termine" element={<BookingPage />} />
         <Route path="einstellungen" element={<SettingsPage />} />
       </Route>
       <Route

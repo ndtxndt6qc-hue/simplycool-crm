@@ -34,6 +34,7 @@ const settingsSchema = z.object({
   garantieZeit: z.string().optional(),
   angebotSperreNachVersand: z.boolean().optional(),
   adminBenachrichtigungEmail: z.string().email().optional().or(z.literal("")),
+  terminDauerMinuten: z.number().int().min(15).max(480).optional(),
 });
 
 settingsRouter.get(

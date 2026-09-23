@@ -339,6 +339,90 @@
   font-size: 18px;
 }
 
+/* Terminbuchung */
+.public-booking {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 480px;
+}
+
+.public-booking-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.public-booking-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.public-booking-day {
+  aspect-ratio: 1;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  font-size: 13px;
+  cursor: not-allowed;
+}
+
+.public-booking-day.available {
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  border-color: var(--color-primary);
+  font-weight: 600;
+}
+
+.public-booking-day.available:hover {
+  background: var(--color-bg);
+}
+
+.public-booking-day.selected {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+
+.public-booking-hint {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-top: 12px;
+}
+
+.public-booking-slot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  gap: 8px;
+}
+
+.public-slot-btn {
+  padding: 8px 4px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.public-slot-btn:hover {
+  border-color: var(--color-primary);
+}
+
+.public-slot-btn.selected {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+
 /* Footer */
 .public-footer {
   background: var(--color-text);

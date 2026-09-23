@@ -22,6 +22,7 @@ export type Settings = {
   abnahmeprotokollVorlagePfad: string | null;
   installationsanweisungVorlagePfad: string | null;
   adminBenachrichtigungEmail: string | null;
+  terminDauerMinuten: number;
 };
 
 export type SettingsInput = Partial<{
@@ -41,6 +42,7 @@ export type SettingsInput = Partial<{
   garantieZeit: string;
   angebotSperreNachVersand: boolean;
   adminBenachrichtigungEmail: string;
+  terminDauerMinuten: number;
 }>;
 
 export function useSettings() {

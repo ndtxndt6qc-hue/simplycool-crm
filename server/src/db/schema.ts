@@ -81,6 +81,7 @@ export const gemeindeAnforderungstypEnum = pgEnum("gemeinde_anforderungstyp", [
   "unklar_abklaeren",
 ]);
 export const abklaerungDurchEnum = pgEnum("abklaerung_durch", ["simplycool", "bauseits"]);
+export const bookingStatusEnum = pgEnum("booking_status", ["bestaetigt", "storniert"]);
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -346,6 +347,7 @@ export const settings = pgTable("settings", {
   smtpUser: varchar("smtp_user", { length: 255 }),
   smtpPassEncrypted: text("smtp_pass_encrypted"),
   adminBenachrichtigungEmail: varchar("admin_benachrichtigung_email", { length: 255 }),
+  terminDauerMinuten: integer("termin_dauer_minuten").notNull().default(60),
 });
 
 export const orderDocuments = pgTable("order_documents", {
@@ -364,4 +366,43 @@ export const pageTexts = pgTable("page_texts", {
   key: varchar("key", { length: 100 }).primaryKey(),
   value: text("value").notNull(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Wiederkehrende wöchentliche Zeitfenster, in denen Termine grundsätzlich buchbar sind
+// (z.B. Mo–Fr 08:00–17:00). wochentag folgt JS Date.getDay(): 0 = Sonntag ... 6 = Samstag.
+export const bookingAvailabilityRules = pgTable("booking_availability_rules", {
+  id: serial("id").primaryKey(),
+  wochentag: integer("wochentag").notNull(),
+  startzeit: varchar("startzeit", { length: 5 }).notNull(),
+  endzeit: varchar("endzeit", { length: 5 }).notNull(),
+  aktiv: boolean("aktiv").notNull().default(true),
+});
+
+// Ausnahmen: einzelne Tage oder Zeitfenster, die trotz Regel NICHT buchbar sind
+// (Ferien, bereits verplant o.ä.). startzeit/endzeit leer = ganzer Tag blockiert.
+export const bookingBlockedSlots = pgTable("booking_blocked_slots", {
+  id: serial("id").primaryKey(),
+  datum: date("datum").notNull(),
+  startzeit: varchar("startzeit", { length: 5 }),
+  endzeit: varchar("endzeit", { length: 5 }),
+  grund: varchar("grund", { length: 255 }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const bookings = pgTable("bookings", {
+  id: serial("id").primaryKey(),
+  datum: date("datum").notNull(),
+  startzeit: varchar("startzeit", { length: 5 }).notNull(),
+  endzeit: varchar("endzeit", { length: 5 }).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  telefon: varchar("telefon", { length: 50 }),
+  email: varchar("email", { length: 255 }),
+  plz: varchar("plz", { length: 10 }).notNull(),
+  ort: varchar("ort", { length: 255 }).notNull(),
+  nachricht: text("nachricht"),
+  quelle: leadQuelleEnum("quelle").notNull().default("website"),
+  status: bookingStatusEnum("status").notNull().default("bestaetigt"),
+  leadId: integer("lead_id").references(() => leads.id, { onDelete: "set null" }),
+  icsUid: varchar("ics_uid", { length: 100 }).notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });

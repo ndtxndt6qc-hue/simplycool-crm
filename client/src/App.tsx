@@ -7,6 +7,7 @@ import { LeistungenPage } from "./public/pages/LeistungenPage";
 import { ReferenzenPage } from "./public/pages/ReferenzenPage";
 import { UeberUnsPage } from "./public/pages/UeberUnsPage";
 import { KontaktPage } from "./public/pages/KontaktPage";
+import { TerminPage } from "./public/pages/TerminPage";
 import { ImpressumPage } from "./public/pages/ImpressumPage";
 import { DatenschutzPage } from "./public/pages/DatenschutzPage";
 import { PublicLayoutV2 } from "./public-v2/components/PublicLayoutV2";
@@ -15,6 +16,7 @@ import { LeistungenPageV2 } from "./public-v2/pages/LeistungenPageV2";
 import { ReferenzenPageV2 } from "./public-v2/pages/ReferenzenPageV2";
 import { UeberUnsPageV2 } from "./public-v2/pages/UeberUnsPageV2";
 import { KontaktPageV2 } from "./public-v2/pages/KontaktPageV2";
+import { TerminPageV2 } from "./public-v2/pages/TerminPageV2";
 
 export default function App() {
   return (
@@ -25,6 +27,7 @@ export default function App() {
         <Route path="referenzen" element={<ReferenzenPage />} />
         <Route path="ueber-uns" element={<UeberUnsPage />} />
         <Route path="kontakt" element={<KontaktPage />} />
+        <Route path="termin" element={<TerminPage />} />
         <Route path="impressum" element={<ImpressumPage />} />
         <Route path="datenschutz" element={<DatenschutzPage />} />
       </Route>
@@ -37,6 +40,7 @@ export default function App() {
         <Route path="referenzen" element={<ReferenzenPageV2 />} />
         <Route path="ueber-uns" element={<UeberUnsPageV2 />} />
         <Route path="kontakt" element={<KontaktPageV2 />} />
+        <Route path="termin" element={<TerminPageV2 />} />
         <Route path="impressum" element={<ImpressumPage />} />
         <Route path="datenschutz" element={<DatenschutzPage />} />
       </Route>

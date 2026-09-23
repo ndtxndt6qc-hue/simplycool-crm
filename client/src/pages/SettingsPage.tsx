@@ -24,6 +24,7 @@ export function SettingsPage() {
   const [smtpUser, setSmtpUser] = useState("");
   const [smtpPass, setSmtpPass] = useState("");
   const [adminBenachrichtigungEmail, setAdminBenachrichtigungEmail] = useState("");
+  const [terminDauerMinuten, setTerminDauerMinuten] = useState("60");
   const [garantieZeit, setGarantieZeit] = useState("");
   const [angebotSperreNachVersand, setAngebotSperreNachVersand] = useState(true);
   const [saved, setSaved] = useState(false);
@@ -44,6 +45,7 @@ export function SettingsPage() {
     setSmtpPort(settings.smtpPort ? String(settings.smtpPort) : "587");
     setSmtpUser(settings.smtpUser ?? "");
     setAdminBenachrichtigungEmail(settings.adminBenachrichtigungEmail ?? "");
+    setTerminDauerMinuten(String(settings.terminDauerMinuten ?? 60));
     setGarantieZeit(settings.garantieZeit ?? "");
     setAngebotSperreNachVersand(settings.angebotSperreNachVersand ?? true);
   }, [settings]);
@@ -67,6 +69,7 @@ export function SettingsPage() {
         smtpPort: smtpPort ? Number(smtpPort) : undefined,
         smtpUser,
         adminBenachrichtigungEmail,
+        terminDauerMinuten: Number(terminDauerMinuten),
         garantieZeit,
         angebotSperreNachVersand,
         ...(smtpPass ? { smtpPassEncrypted: smtpPass } : {}),
@@ -249,8 +252,27 @@ export function SettingsPage() {
               placeholder="z.B. info@simply-cool.ch"
             />
             <p style={{ fontSize: 11, color: "var(--color-text-muted)", margin: "4px 0 0" }}>
-              Bei jeder neuen Anfrage über das Kontaktformular der Webseite wird an diese Adresse eine
-              Benachrichtigung gesendet (nur wenn SMTP oben konfiguriert ist).
+              Bei jeder neuen Anfrage über das Kontaktformular oder Terminbuchung der Webseite wird an diese
+              Adresse eine Benachrichtigung gesendet (nur wenn SMTP oben konfiguriert ist).
+            </p>
+          </div>
+        </div>
+
+        <div className="card" style={{ marginBottom: 24 }}>
+          <h3 style={{ marginBottom: 16 }}>Terminbuchung</h3>
+          <div className="field">
+            <label htmlFor="s-termin-dauer">Termindauer (Minuten)</label>
+            <input
+              id="s-termin-dauer"
+              type="number"
+              min={15}
+              step={15}
+              value={terminDauerMinuten}
+              onChange={(e) => setTerminDauerMinuten(e.target.value)}
+            />
+            <p style={{ fontSize: 11, color: "var(--color-text-muted)", margin: "4px 0 0" }}>
+              Länge eines buchbaren Termins auf der Webseite. Verfügbare Zeitfenster werden unter{" "}
+              <a href="/app/termine">Terminkalender</a> verwaltet.
             </p>
           </div>
         </div>
