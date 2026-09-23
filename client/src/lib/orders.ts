@@ -41,6 +41,10 @@ export type Order = {
   bohrpartnerId: number | null;
   referenzFreigegeben: boolean;
   referenzBeschreibung: string | null;
+  abnahmeUnterzeichnerName: string | null;
+  abnahmeBemerkungen: string | null;
+  abnahmeUnterschrift: string | null;
+  abnahmeAbgeschlossenAm: string | null;
   createdAt: string;
 };
 
@@ -190,6 +194,18 @@ export function useUploadReferenzFoto(orderId: number) {
       return res.json() as Promise<OrderReferenzFoto>;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["orders", orderId] }),
+  });
+}
+
+export function useSubmitAbnahmeprotokoll(orderId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { unterzeichnerName: string; bemerkungen?: string; unterschriftDataUrl: string }) =>
+      api.post<{ order: Order; document: OrderDocument }>(`/orders/${orderId}/abnahmeprotokoll`, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["orders", orderId] });
+      qc.invalidateQueries({ queryKey: ["orders"] });
+    },
   });
 }
 

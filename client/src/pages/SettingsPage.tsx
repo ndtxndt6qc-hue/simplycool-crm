@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { useSettings, useUpdateSettings, useUploadLogo, useUploadVorlage, useTestSmtp } from "../lib/settings";
+import { useSettings, useUpdateSettings, useUploadLogo, useUploadVorlage, useTestSmtp, DEFAULT_ABNAHMEPROTOKOLL_TEXT } from "../lib/settings";
 import { UsersSection } from "../components/UsersSection";
 import { ApiError } from "../lib/api";
 
@@ -27,6 +27,7 @@ export function SettingsPage() {
   const [smtpAbsenderEmail, setSmtpAbsenderEmail] = useState("");
   const [adminBenachrichtigungEmail, setAdminBenachrichtigungEmail] = useState("");
   const [terminDauerMinuten, setTerminDauerMinuten] = useState("60");
+  const [abnahmeprotokollText, setAbnahmeprotokollText] = useState("");
   const [garantieZeit, setGarantieZeit] = useState("");
   const [angebotSperreNachVersand, setAngebotSperreNachVersand] = useState(true);
   const [saved, setSaved] = useState(false);
@@ -50,6 +51,7 @@ export function SettingsPage() {
     setSmtpAbsenderEmail(settings.smtpAbsenderEmail ?? "");
     setAdminBenachrichtigungEmail(settings.adminBenachrichtigungEmail ?? "");
     setTerminDauerMinuten(String(settings.terminDauerMinuten ?? 60));
+    setAbnahmeprotokollText(settings.abnahmeprotokollText ?? "");
     setGarantieZeit(settings.garantieZeit ?? "");
     setAngebotSperreNachVersand(settings.angebotSperreNachVersand ?? true);
   }, [settings]);
@@ -75,6 +77,7 @@ export function SettingsPage() {
         smtpAbsenderEmail,
         adminBenachrichtigungEmail,
         terminDauerMinuten: Number(terminDauerMinuten),
+        abnahmeprotokollText,
         garantieZeit,
         angebotSperreNachVersand,
         ...(smtpPass ? { smtpPassEncrypted: smtpPass } : {}),
@@ -214,7 +217,21 @@ export function SettingsPage() {
         <div className="card">
           <h3 style={{ marginBottom: 16 }}>Checkliste & Protokoll-Vorlagen</h3>
           <div className="field">
-            <label htmlFor="s-vorlage-abnahme">Vorlage Abnahmeprotokoll (PDF/Word)</label>
+            <label htmlFor="s-abnahme-text">Digitales Abnahmeprotokoll — Bestätigungstext</label>
+            <textarea
+              id="s-abnahme-text"
+              rows={5}
+              value={abnahmeprotokollText}
+              onChange={(e) => setAbnahmeprotokollText(e.target.value)}
+              placeholder={DEFAULT_ABNAHMEPROTOKOLL_TEXT}
+            />
+            <p style={{ fontSize: 11, color: "var(--color-text-muted)", margin: "4px 0 0" }}>
+              Eine Bestätigungsaussage pro Zeile — erscheint als Checkliste im digitalen Abnahmeprotokoll (Auftrag →
+              Abnahme, mit Unterschrift per Finger/Tablet). Leer lassen für den Standardtext.
+            </p>
+          </div>
+          <div className="field">
+            <label htmlFor="s-vorlage-abnahme">Vorlage Abnahmeprotokoll zum Ausdrucken (PDF/Word, optional)</label>
             {settings?.abnahmeprotokollVorlagePfad && (
               <p style={{ margin: "0 0 8px" }}>
                 <a href={settings.abnahmeprotokollVorlagePfad} target="_blank" rel="noreferrer">

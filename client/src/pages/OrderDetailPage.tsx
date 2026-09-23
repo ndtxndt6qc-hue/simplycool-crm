@@ -13,6 +13,7 @@ import {
 } from "../lib/orders";
 import { usePartners } from "../lib/partners";
 import { Dropzone } from "../components/Dropzone";
+import { AbnahmeprotokollCard } from "../components/AbnahmeprotokollCard";
 import { useSettings } from "../lib/settings";
 import { useCreateInvoiceFromOrder, useInvoiceByOrder } from "../lib/invoices";
 import { ApiError } from "../lib/api";
@@ -355,6 +356,8 @@ export function OrderDetailPage() {
           </div>
         </div>
       </div>
+
+      <AbnahmeprotokollCard order={order} />
 
       <div className="card" style={{ marginTop: 20, padding: 0 }}>
         <table className="data-table">

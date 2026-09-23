@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import multer from "multer";
 import path from "node:path";
 import fs from "node:fs";
@@ -21,6 +21,8 @@ import {
 } from "../db/schema.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { CHECKLIST_PUNKTE, ORDER_DOCUMENT_TYPEN, ORDER_REFERENZ_FOTO_TYPEN, ORDER_STATUS } from "@klimainstall/shared";
+import { getOrCreateSettings } from "../services/settings.js";
+import { renderAbnahmeprotokollPdf } from "../pdf/abnahmeprotokollPdf.js";
 
 export const ordersRouter = Router();
 
@@ -199,6 +201,71 @@ ordersRouter.delete(
   asyncHandler(async (req, res) => {
     await db.delete(orderDocuments).where(eq(orderDocuments.id, Number(req.params.docId)));
     res.status(204).send();
+  })
+);
+
+const abnahmeprotokollSchema = z.object({
+  unterzeichnerName: z.string().trim().min(1, "Name ist erforderlich."),
+  bemerkungen: z.string().trim().optional(),
+  unterschriftDataUrl: z.string().startsWith("data:image/png;base64,", "Unterschrift fehlt."),
+});
+
+ordersRouter.post(
+  "/:id/abnahmeprotokoll",
+  asyncHandler(async (req, res) => {
+    const parsed = abnahmeprotokollSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Ungültige Eingabe." });
+      return;
+    }
+    const orderId = Number(req.params.id);
+    const [row] = await db
+      .select({ order: orders, customer: customers, property: properties })
+      .from(orders)
+      .innerJoin(customers, eq(orders.customerId, customers.id))
+      .innerJoin(properties, eq(orders.propertyId, properties.id))
+      .where(eq(orders.id, orderId));
+    if (!row) {
+      res.status(404).json({ error: "Auftrag nicht gefunden." });
+      return;
+    }
+
+    const abgeschlossenAm = new Date();
+    const [updatedOrder] = await db
+      .update(orders)
+      .set({
+        abnahmeUnterzeichnerName: parsed.data.unterzeichnerName,
+        abnahmeBemerkungen: parsed.data.bemerkungen || null,
+        abnahmeUnterschrift: parsed.data.unterschriftDataUrl,
+        abnahmeAbgeschlossenAm: abgeschlossenAm,
+      })
+      .where(eq(orders.id, orderId))
+      .returning();
+
+    await db
+      .update(orderChecklistItems)
+      .set({ erledigt: true, erledigtAm: abgeschlossenAm })
+      .where(and(eq(orderChecklistItems.orderId, orderId), eq(orderChecklistItems.bezeichnung, "abnahme_kunde")));
+
+    const settings = await getOrCreateSettings();
+    const pdfBuffer = await renderAbnahmeprotokollPdf({
+      order: updatedOrder,
+      customer: row.customer,
+      property: row.property,
+      settings,
+      unterzeichnerName: parsed.data.unterzeichnerName,
+      bemerkungen: parsed.data.bemerkungen || "",
+      unterschriftDataUrl: parsed.data.unterschriftDataUrl,
+      abgeschlossenAm,
+    });
+    const filename = `${crypto.randomUUID()}.pdf`;
+    fs.writeFileSync(path.join(ORDER_DOCUMENT_DIR, filename), pdfBuffer);
+    const [document] = await db
+      .insert(orderDocuments)
+      .values({ orderId, typ: "abnahmeprotokoll_signiert", dateipfad: `/uploads/order-documents/${filename}` })
+      .returning();
+
+    res.status(201).json({ order: updatedOrder, document });
   })
 );
 

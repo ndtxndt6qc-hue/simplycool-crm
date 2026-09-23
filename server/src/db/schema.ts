@@ -264,6 +264,12 @@ export const orders = pgTable("orders", {
   bohrpartnerId: integer("bohrpartner_id").references(() => partners.id, { onDelete: "set null" }),
   referenzFreigegeben: boolean("referenz_freigegeben").notNull().default(false),
   referenzBeschreibung: text("referenz_beschreibung"),
+  // Digitales Abnahmeprotokoll (iPad, Unterschrift per Finger) — als PDF zusätzlich in
+  // order_documents (typ abnahmeprotokoll_signiert) abgelegt, diese Felder sind die Rohdaten dafür.
+  abnahmeUnterzeichnerName: varchar("abnahme_unterzeichner_name", { length: 255 }),
+  abnahmeBemerkungen: text("abnahme_bemerkungen"),
+  abnahmeUnterschrift: text("abnahme_unterschrift"), // data:image/png;base64,...
+  abnahmeAbgeschlossenAm: timestamp("abnahme_abgeschlossen_am"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -362,6 +368,9 @@ export const settings = pgTable("settings", {
   smtpAbsenderEmail: varchar("smtp_absender_email", { length: 255 }),
   adminBenachrichtigungEmail: varchar("admin_benachrichtigung_email", { length: 255 }),
   terminDauerMinuten: integer("termin_dauer_minuten").notNull().default(60),
+  // Abnahmeprotokoll-Text: eine Bestätigungsaussage pro Zeile, im digitalen Abnahmeprotokoll
+  // (Auftrag) als Checkliste dargestellt. Editierbar unter Einstellungen.
+  abnahmeprotokollText: text("abnahmeprotokoll_text"),
 });
 
 export const orderDocuments = pgTable("order_documents", {

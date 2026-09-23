@@ -47,6 +47,7 @@ const settingsSchema = z.object({
     .optional()
     .or(z.literal("")),
   terminDauerMinuten: z.number().int().min(15).max(480).optional(),
+  abnahmeprotokollText: z.string().optional(),
 });
 
 settingsRouter.get(

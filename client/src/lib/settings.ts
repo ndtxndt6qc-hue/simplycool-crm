@@ -24,6 +24,7 @@ export type Settings = {
   installationsanweisungVorlagePfad: string | null;
   adminBenachrichtigungEmail: string | null;
   terminDauerMinuten: number;
+  abnahmeprotokollText: string | null;
 };
 
 export type SettingsInput = Partial<{
@@ -45,7 +46,15 @@ export type SettingsInput = Partial<{
   angebotSperreNachVersand: boolean;
   adminBenachrichtigungEmail: string;
   terminDauerMinuten: number;
+  abnahmeprotokollText: string;
 }>;
+
+export const DEFAULT_ABNAHMEPROTOKOLL_TEXT = [
+  "Das Klimagerät wurde fachgerecht installiert und in Betrieb genommen.",
+  "Der Kunde wurde in die Bedienung des Geräts eingewiesen.",
+  "Die Funktion wurde gemeinsam mit dem Kunden geprüft.",
+  "Es bestehen keine offensichtlichen Mängel.",
+].join("\n");
 
 export function useSettings() {
   return useQuery({
