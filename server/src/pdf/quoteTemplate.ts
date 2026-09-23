@@ -49,11 +49,14 @@ function logoDataUri(logoPfad: string | null): string | null {
   }
 }
 
-const TECHNIKER_ICON_SVG = `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#475569" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="3.2"/><path d="M5 21c0-4 3.1-7 7-7s7 3 7 7"/></svg>`;
-const MATERIAL_ICON_SVG = `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#475569" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l1.5-4.5A2 2 0 0 1 6.4 7h11.2a2 2 0 0 1 1.9 1.5L21 13"/><rect x="2.5" y="13" width="19" height="5" rx="1"/><circle cx="7" cy="18.5" r="1.5"/><circle cx="17" cy="18.5" r="1.5"/></svg>`;
-const KERNBOHRUNG_ICON_SVG = `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#475569" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.2"/></svg>`;
-const GEMEINDE_ICON_SVG = `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#475569" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V9l8-5 8 5v12"/><path d="M9 21v-6h6v6"/></svg>`;
-const RABATT_ICON_SVG = `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#475569" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12 12 20 4 12V4h8z"/><circle cx="9" cy="9" r="1.4" fill="#475569" stroke="none"/></svg>`;
+// Akzentfarbe passend zur internen App (--color-primary: #0f766e).
+const BRAND = "#0f766e";
+
+const TECHNIKER_ICON_SVG = `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="${BRAND}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="3.2"/><path d="M5 21c0-4 3.1-7 7-7s7 3 7 7"/></svg>`;
+const MATERIAL_ICON_SVG = `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="${BRAND}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l1.5-4.5A2 2 0 0 1 6.4 7h11.2a2 2 0 0 1 1.9 1.5L21 13"/><rect x="2.5" y="13" width="19" height="5" rx="1"/><circle cx="7" cy="18.5" r="1.5"/><circle cx="17" cy="18.5" r="1.5"/></svg>`;
+const KERNBOHRUNG_ICON_SVG = `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="${BRAND}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.2"/></svg>`;
+const GEMEINDE_ICON_SVG = `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="${BRAND}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V9l8-5 8 5v12"/><path d="M9 21v-6h6v6"/></svg>`;
+const RABATT_ICON_SVG = `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="${BRAND}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12 12 20 4 12V4h8z"/><circle cx="9" cy="9" r="1.4" fill="${BRAND}" stroke="none"/></svg>`;
 
 function itemImageHtml(item: InferSelectModel<typeof quoteItems> & { deviceBildPfad?: string | null }): string {
   if (item.typ === "geraet") {
@@ -138,22 +141,27 @@ export function renderQuoteHtml({ quote, customer, property, items, settings: cf
       .company { text-align: right; font-size: 12px; color: #475569; line-height: 1.5; }
       .addresses { display: flex; justify-content: space-between; margin-bottom: 32px; }
       .addr-block { font-size: 12px; line-height: 1.6; }
-      .addr-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 4px; }
+      .addr-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: ${BRAND}; margin-bottom: 4px; font-weight: 600; }
       h1 { font-size: 22px; margin: 0 0 4px; }
-      .meta { font-size: 12px; color: #475569; margin-bottom: 24px; }
+      .meta { font-size: 12px; color: #475569; margin-bottom: 24px; display: flex; align-items: center; gap: 10px; }
+      .gueltig-badge { display: inline-block; background: #f0fdfa; color: ${BRAND}; border-radius: 999px; padding: 3px 11px; font-weight: 600; font-size: 11px; }
       table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
-      th { text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; color: #94a3b8; border-bottom: 1px solid #cbd5e1; padding: 7px 8px; }
+      th { text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; color: ${BRAND}; background: #f0fdfa; border-bottom: 1px solid #cce9e4; padding: 7px 8px; }
+      th:first-child { border-top-left-radius: 6px; border-bottom-left-radius: 6px; }
+      th:last-child { border-top-right-radius: 6px; border-bottom-right-radius: 6px; }
       td { padding: 9px 8px; border-bottom: 1px solid #e2e8f0; font-size: 12px; }
+      tbody tr:nth-child(even) td { background: #f8fafc; }
       .num { text-align: right; }
       .img-cell { width: 34px; padding: 6px 4px; }
       .item-specs { font-size: 10.5px; line-height: 1.5; color: #64748b; margin-top: 3px; }
       .item-img { width: 28px; height: 28px; object-fit: cover; border-radius: 4px; display: block; }
       .totals { width: 260px; margin-left: auto; margin-top: 16px; }
       .totals div { display: flex; justify-content: space-between; padding: 4px 8px; font-size: 13px; }
-      .totals .grand { font-weight: 700; font-size: 15px; border-top: 1px solid #0f172a; margin-top: 4px; padding-top: 8px; }
+      .totals .grand { font-weight: 700; font-size: 15px; color: ${BRAND}; border-top: 1.5px solid ${BRAND}; margin-top: 4px; padding-top: 8px; }
       .totals .optional-line { color: #92400e; }
       .optional-row td { color: #64748b; font-style: italic; }
       .opt-badge { display: inline-block; font-style: normal; font-size: 9px; text-transform: uppercase; letter-spacing: 0.04em; background: #fef3c7; color: #92400e; border-radius: 3px; padding: 1px 5px; margin-left: 4px; }
+      .payment-notes { width: 260px; margin-left: auto; margin-top: 10px; font-size: 10.5px; line-height: 1.6; color: #64748b; text-align: right; }
       .footer { margin-top: 60px; font-size: 11px; color: #94a3b8; }
       .agb-hinweis { margin-top: 6px; font-size: 10px; color: #94a3b8; }
       .auftragsbestaetigung { page-break-before: always; padding-top: 40px; }
@@ -174,7 +182,8 @@ export function renderQuoteHtml({ quote, customer, property, items, settings: cf
 
     <h1>Angebot ${escapeHtml(quote.angebotsnummer)}</h1>
     <div class="meta">
-      Datum: ${dateCh(quote.datum)}${quote.gueltigBis ? ` · Gültig bis: ${dateCh(quote.gueltigBis)}` : ""}
+      <span>Datum: ${dateCh(quote.datum)}</span>
+      ${quote.gueltigBis ? `<span class="gueltig-badge">Gültig bis ${dateCh(quote.gueltigBis)}</span>` : ""}
     </div>
 
     <table>
@@ -200,6 +209,15 @@ export function renderQuoteHtml({ quote, customer, property, items, settings: cf
       ${
         optionaleItems.length
           ? `<div class="optional-line"><span>Optionale Positionen (nicht enthalten)</span><span>CHF ${chf(nettoOptional)}</span></div>`
+          : ""
+      }
+    </div>
+
+    <div class="payment-notes">
+      <div>Zahlbar netto 30 Tage nach Rechnungsstellung, sofern nicht anders vereinbart.</div>
+      ${
+        cfg.iban || cfg.qrIban
+          ? `<div>Die Rechnung inkl. QR-Zahlteil folgt nach Abschluss der Installation.</div>`
           : ""
       }
     </div>

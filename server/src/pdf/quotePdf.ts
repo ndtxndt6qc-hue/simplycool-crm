@@ -25,7 +25,13 @@ export async function renderQuotePdf(data: QuoteData): Promise<Buffer> {
     const pdf = await page.pdf({
       format: "A4",
       printBackground: true,
-      margin: { top: "0", bottom: "0", left: "0", right: "0" },
+      margin: { top: "0", bottom: "34px", left: "0", right: "0" },
+      displayHeaderFooter: true,
+      headerTemplate: "<span></span>",
+      footerTemplate: `
+        <div style="width:100%; font-family:Helvetica,Arial,sans-serif; font-size:9px; color:#94a3b8; text-align:center;">
+          Seite <span class="pageNumber"></span> von <span class="totalPages"></span>
+        </div>`,
     });
     return Buffer.from(pdf);
   } finally {
