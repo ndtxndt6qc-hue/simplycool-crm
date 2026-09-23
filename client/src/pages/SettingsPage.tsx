@@ -24,6 +24,7 @@ export function SettingsPage() {
   const [smtpPort, setSmtpPort] = useState("587");
   const [smtpUser, setSmtpUser] = useState("");
   const [smtpPass, setSmtpPass] = useState("");
+  const [smtpAbsenderEmail, setSmtpAbsenderEmail] = useState("");
   const [adminBenachrichtigungEmail, setAdminBenachrichtigungEmail] = useState("");
   const [terminDauerMinuten, setTerminDauerMinuten] = useState("60");
   const [garantieZeit, setGarantieZeit] = useState("");
@@ -46,6 +47,7 @@ export function SettingsPage() {
     setSmtpHost(settings.smtpHost ?? "");
     setSmtpPort(settings.smtpPort ? String(settings.smtpPort) : "587");
     setSmtpUser(settings.smtpUser ?? "");
+    setSmtpAbsenderEmail(settings.smtpAbsenderEmail ?? "");
     setAdminBenachrichtigungEmail(settings.adminBenachrichtigungEmail ?? "");
     setTerminDauerMinuten(String(settings.terminDauerMinuten ?? 60));
     setGarantieZeit(settings.garantieZeit ?? "");
@@ -70,6 +72,7 @@ export function SettingsPage() {
         smtpHost,
         smtpPort: smtpPort ? Number(smtpPort) : undefined,
         smtpUser,
+        smtpAbsenderEmail,
         adminBenachrichtigungEmail,
         terminDauerMinuten: Number(terminDauerMinuten),
         garantieZeit,
@@ -94,6 +97,7 @@ export function SettingsPage() {
         smtpHost,
         smtpPort: smtpPort ? Number(smtpPort) : 587,
         smtpUser,
+        smtpAbsenderEmail,
         adminBenachrichtigungEmail,
         ...(smtpPass ? { smtpPassEncrypted: smtpPass } : {}),
       });
@@ -268,6 +272,21 @@ export function SettingsPage() {
           <div className="field">
             <label htmlFor="s-smtp-pass">Passwort {settings?.smtpPassSet && "(gesetzt — leer lassen um zu behalten)"}</label>
             <input id="s-smtp-pass" type="password" value={smtpPass} onChange={(e) => setSmtpPass(e.target.value)} />
+          </div>
+          <div className="field">
+            <label htmlFor="s-smtp-absender">Absender-E-Mail</label>
+            <input
+              id="s-smtp-absender"
+              type="email"
+              value={smtpAbsenderEmail}
+              onChange={(e) => setSmtpAbsenderEmail(e.target.value)}
+              placeholder="z.B. info@simply-cool.ch"
+            />
+            <p style={{ fontSize: 11, color: "var(--color-text-muted)", margin: "4px 0 0" }}>
+              Adresse, die als Absender in versendeten E-Mails erscheint. Muss beim E-Mail-Anbieter (z.B. Brevo)
+              als Absender verifiziert sein — ist meist NICHT dasselbe wie der SMTP-Benutzer oben. Leer lassen,
+              um den SMTP-Benutzer als Absender zu verwenden.
+            </p>
           </div>
           <div className="field">
             <label htmlFor="s-admin-email">Admin-E-Mail für neue Website-Leads</label>

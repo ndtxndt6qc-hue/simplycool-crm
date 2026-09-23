@@ -20,9 +20,10 @@ export async function sendMail(
   message: { to: string; subject: string; text: string; attachments: { filename: string; content: Buffer }[] }
 ) {
   const transporter = createTransporter(cfg);
+  const absender = (cfg.smtpAbsenderEmail || cfg.smtpUser)!.trim();
 
   await transporter.sendMail({
-    from: `"${cfg.firmenname || "SimplyCool"}" <${cfg.smtpUser}>`,
+    from: `"${cfg.firmenname || "SimplyCool"}" <${absender}>`,
     to: message.to,
     subject: message.subject,
     text: message.text,

@@ -346,6 +346,11 @@ export const settings = pgTable("settings", {
   smtpPort: integer("smtp_port"),
   smtpUser: varchar("smtp_user", { length: 255 }),
   smtpPassEncrypted: text("smtp_pass_encrypted"),
+  // Absenderadresse im "From"-Header — bei Diensten wie Brevo oft nicht identisch mit dem
+  // SMTP-Login (der Login ist nur ein technischer Zugangsname). Muss beim E-Mail-Anbieter als
+  // Absender verifiziert sein, sonst wird die Mail dort verworfen. Fällt auf smtpUser zurück,
+  // falls leer.
+  smtpAbsenderEmail: varchar("smtp_absender_email", { length: 255 }),
   adminBenachrichtigungEmail: varchar("admin_benachrichtigung_email", { length: 255 }),
   terminDauerMinuten: integer("termin_dauer_minuten").notNull().default(60),
 });

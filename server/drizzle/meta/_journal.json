@@ -85,6 +85,13 @@
       "when": 1790164409854,
       "tag": "0011_charming_mikhail_rasputin",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1790168579630,
+      "tag": "0012_low_red_ghost",
+      "breakpoints": true
     }
   ]
 }

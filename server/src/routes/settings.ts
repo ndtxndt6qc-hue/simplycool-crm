@@ -32,6 +32,12 @@ const settingsSchema = z.object({
   smtpPort: z.number().int().optional(),
   smtpUser: z.string().trim().optional(),
   smtpPassEncrypted: z.string().optional(),
+  smtpAbsenderEmail: z
+    .string()
+    .trim()
+    .email()
+    .optional()
+    .or(z.literal("")),
   garantieZeit: z.string().optional(),
   angebotSperreNachVersand: z.boolean().optional(),
   adminBenachrichtigungEmail: z
@@ -94,6 +100,12 @@ const smtpTestSchema = z.object({
   smtpPort: z.number().int(),
   smtpUser: z.string().trim().min(1, "Benutzer ist erforderlich."),
   smtpPassEncrypted: z.string().optional(), // leer = gespeichertes Passwort verwenden
+  smtpAbsenderEmail: z
+    .string()
+    .trim()
+    .email()
+    .optional()
+    .or(z.literal("")),
   adminBenachrichtigungEmail: z
     .string()
     .trim()
@@ -124,6 +136,7 @@ settingsRouter.post(
       smtpPort: parsed.data.smtpPort,
       smtpUser: parsed.data.smtpUser,
       smtpPassEncrypted,
+      smtpAbsenderEmail: parsed.data.smtpAbsenderEmail || current.smtpAbsenderEmail,
     };
 
     try {

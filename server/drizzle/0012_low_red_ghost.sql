@@ -1,0 +1,1 @@
+ALTER TABLE "settings" ADD COLUMN "smtp_absender_email" varchar(255);

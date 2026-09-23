@@ -16,6 +16,7 @@ export type Settings = {
   smtpHost: string | null;
   smtpPort: number | null;
   smtpUser: string | null;
+  smtpAbsenderEmail: string | null;
   smtpPassSet: boolean;
   garantieZeit: string | null;
   angebotSperreNachVersand: boolean;
@@ -39,6 +40,7 @@ export type SettingsInput = Partial<{
   smtpPort: number;
   smtpUser: string;
   smtpPassEncrypted: string;
+  smtpAbsenderEmail: string;
   garantieZeit: string;
   angebotSperreNachVersand: boolean;
   adminBenachrichtigungEmail: string;
@@ -65,6 +67,7 @@ export type SmtpTestInput = {
   smtpPort: number;
   smtpUser: string;
   smtpPassEncrypted?: string;
+  smtpAbsenderEmail?: string;
   adminBenachrichtigungEmail?: string;
 };
 
