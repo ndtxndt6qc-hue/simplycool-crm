@@ -28,13 +28,18 @@ const settingsSchema = z.object({
   mwstNummer: z.string().optional(),
   defaultMwstSatz: z.number().nonnegative().optional(),
   stundensatz: z.number().nonnegative().optional(),
-  smtpHost: z.string().optional(),
+  smtpHost: z.string().trim().optional(),
   smtpPort: z.number().int().optional(),
-  smtpUser: z.string().optional(),
+  smtpUser: z.string().trim().optional(),
   smtpPassEncrypted: z.string().optional(),
   garantieZeit: z.string().optional(),
   angebotSperreNachVersand: z.boolean().optional(),
-  adminBenachrichtigungEmail: z.string().email().optional().or(z.literal("")),
+  adminBenachrichtigungEmail: z
+    .string()
+    .trim()
+    .email()
+    .optional()
+    .or(z.literal("")),
   terminDauerMinuten: z.number().int().min(15).max(480).optional(),
 });
 
@@ -85,11 +90,16 @@ settingsRouter.patch(
 );
 
 const smtpTestSchema = z.object({
-  smtpHost: z.string().min(1, "SMTP-Host ist erforderlich."),
+  smtpHost: z.string().trim().min(1, "SMTP-Host ist erforderlich."),
   smtpPort: z.number().int(),
-  smtpUser: z.string().min(1, "Benutzer ist erforderlich."),
+  smtpUser: z.string().trim().min(1, "Benutzer ist erforderlich."),
   smtpPassEncrypted: z.string().optional(), // leer = gespeichertes Passwort verwenden
-  adminBenachrichtigungEmail: z.string().email().optional().or(z.literal("")),
+  adminBenachrichtigungEmail: z
+    .string()
+    .trim()
+    .email()
+    .optional()
+    .or(z.literal("")),
 });
 
 settingsRouter.post(

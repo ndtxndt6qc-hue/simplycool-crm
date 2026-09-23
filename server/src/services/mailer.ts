@@ -5,11 +5,13 @@ import type { settings } from "../db/schema.js";
 type Settings = InferSelectModel<typeof settings>;
 
 function createTransporter(cfg: Settings) {
+  // trim() als letzte Absicherung gegen kopierte Werte mit Leerzeichen (z.B. Host mit
+  // führendem Space führt sonst zu einem schwer verständlichen DNS-Fehler).
   return nodemailer.createTransport({
-    host: cfg.smtpHost!,
+    host: cfg.smtpHost!.trim(),
     port: cfg.smtpPort ?? 587,
     secure: cfg.smtpPort === 465,
-    auth: cfg.smtpUser ? { user: cfg.smtpUser, pass: cfg.smtpPassEncrypted ?? "" } : undefined,
+    auth: cfg.smtpUser ? { user: cfg.smtpUser.trim(), pass: cfg.smtpPassEncrypted ?? "" } : undefined,
   });
 }
 
